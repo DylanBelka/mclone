@@ -5,6 +5,9 @@ Camera::Camera()
 	pos = glm::vec3(0.0, 0.0, 3.0);
 	front = glm::vec3(0.0, 0.0, -1.0);
 	up = glm::vec3(0.0, 1.0, 0.0);
+	worldUp = up;
+
+	updateCameraVectors();
 }
 
 void Camera::move(direction d)
@@ -30,6 +33,19 @@ void Camera::move(direction d)
 glm::mat4 Camera::lookAt()
 {
 	return glm::lookAt(pos, pos + front, up);
+}
+
+void Camera::updateCameraVectors()
+{
+	// Calculate the new Front vector
+	glm::vec3 newFront;
+	newFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	newFront.y = sin(glm::radians(pitch));
+	newFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front = glm::normalize(newFront);
+	// Also re-calculate the Right and Up vector
+	right = glm::normalize(glm::cross(front, worldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+	up = glm::normalize(glm::cross(right, front));
 }
 
 void Camera::updateRot(double x, double y)
@@ -58,10 +74,5 @@ void Camera::updateRot(double x, double y)
 	if (pitch < -89.0f)
 		pitch = -89.0f;
 
-	glm::vec3 front;
-	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
-	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	this->front = glm::normalize(front);
-	up = glm::normalize(glm::cross(glm::normalize(glm::cross(this->front, up)), this->front));
+	updateCameraVectors();
 }

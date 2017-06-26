@@ -23,6 +23,9 @@ public:
 	glm::mat4 lookAt();
 
 private:
+
+	void updateCameraVectors();
+
 	float speed = .5;
 
 	double lastX;
@@ -35,6 +38,8 @@ private:
 	glm::vec3 pos;
 	glm::vec3 front;
 	glm::vec3 up;
+	glm::vec3 right;
+	glm::vec3 worldUp;
 };
 
 #endif // CAMERA_H
