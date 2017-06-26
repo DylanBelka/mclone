@@ -5,10 +5,41 @@
 #include <memory>
 #include <iostream>
 
+#include <chrono>
+
 #include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtx/string_cast.hpp>
 
 #include "Block.h"
 #include "Shader.h"
+
+const unsigned int chunkWidth = 16;
+const unsigned int chunkHeight = 256;
+const unsigned int chunkDepth = 16;
+
+const unsigned int chunkSize = chunkWidth * chunkDepth * chunkHeight;
+
+extern float vertices[180];
+
+void normalizeVertices();
+void normalizeFaceVertices();
+
+namespace Face {
+	enum FaceIndex
+	{
+		FRONT,
+		BACK,
+		LEFT,
+		RIGHT,
+		BOTTOM,
+		TOP,
+
+		NUM_FACES
+	};
+}
+
+std::vector<glm::vec3> getFace(Face::FaceIndex index);
 
 /****
 
@@ -26,14 +57,23 @@ public:
 
 	void convert();
 
-	void updateAndDraw(Shader& s);
+	void moveBlockTo(unsigned int index, glm::vec3 where) { blocks[index] = where; }
+	glm::vec3 getBlockPos(unsigned int index) { return blocks[index].getPos(); }
+
+	void draw(Shader& s);
 
 public:
-	const unsigned int chunkSize = 16 * 16 * 256;
+	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs);
+	
 	std::vector<Block> blocks;
 
+	glm::vec3 pos;
+
 	unsigned int vbo;
+	unsigned int uvvbo;
 	unsigned int vao;
+
+	unsigned int numVerts;
 };
 
 #endif // CHUNK_H

@@ -120,12 +120,35 @@ void Application::handleEvents()
 void Application::run()
 {
 	Shader s("vertex.glsl", "fragment.glsl");
-	Block::blockMeshData glBlockMeshData = Block::initBlockMesh(); // glBlockMeshData has vbo and vao as (x,y)
 
-	/*
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	*/
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// load image, create texture and generate mipmaps
+	int w, h, nrChannels;
+	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	unsigned char *data = stbi_load("grass.png", &w, &h, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	stbi_image_free(data);
+
+	glActiveTexture(texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
 	using namespace std::chrono;
 
 	steady_clock::time_point beginFrame = steady_clock::now();
@@ -139,103 +162,75 @@ void Application::run()
 	glm::mat4 view;
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 100.f);
+	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
 
-#if 0
-	const int numChunks = 1;
+	const unsigned int numChunks = 100;
 
-	std::vector<int> v;
-	v.push_back(1);
-	std::vector<std::array<std::array<std::array<Block, 256>, 16>, 16>> chunks; // wat
+	int x = 0;
+	int z = 0;
 
-	for (int i = 0; i < numChunks; i++) {
-		std::array<std::array<std::array<Block, 256>, 16>, 16> blocks;
-		for (int x = 0; x < 16; x++)
-		{
-			for (int z = 0; z < 16; z++)
-			{
-				for (int y = 0; y < 256; y++)
-				{
-					blocks[x][z][y].moveTo(glm::vec3(x + i * 16, y, z));
-				}
-			}
-		}
-		chunks.push_back(blocks);
-	}
-
-#endif
-
-#if 0
-
-	std::vector<Block> blocks(100);
-	for (int i = 0; i < blocks.size(); i++)
-	{
-		blocks[i].moveTo(glm::vec3(i * 2, 0.0, 0.0));
-	}
-
-#endif
-
-	const unsigned int numChunks = 10;
 	std::vector<Chunk> chunks;
 	for (int i = 0; i < numChunks; i++)
 	{
 		chunks.push_back(Chunk());
-		for (int j = 0; j < chunks[i].chunkSize; j++)
+		for (int j = 0; j < chunkSize; j++)
 		{
-			Block b = chunks[i].blocks[j];
-			chunks[i].blocks[j].moveTo(glm::vec3(b.getPos().x + i * 16, b.getPos().y, b.getPos().z));
+			chunks[i].pos = glm::vec3(x, 0.0, z);
+			
+			if ((chunks[i].getBlockPos(j).x == 3 && chunks[i].getBlockPos(j).z == 3) ||
+				(chunks[i].getBlockPos(j).x == 4 && chunks[i].getBlockPos(j).z == 3) ||
+				(chunks[i].getBlockPos(j).x == 3 && chunks[i].getBlockPos(j).z == 4) ||
+				(chunks[i].getBlockPos(j).x == 4 && chunks[i].getBlockPos(j).z == 4)
+				)
+			{
+				chunks[i].blocks[j].type = Block::AIR; 
+			}
+			else
+			{
+				//std::cout << glm::to_string(chunks[i].getBlockPos(j)) << std::endl;
+				chunks[i].blocks[j].type = Block::STONE;
+			}
+		}
+
+		x += 16;
+		if (x == 16 * 16)
+		{
+			x = 0;
+			z += 16;
 		}
 	}
 
+	std::cout << "done creating chunks" << std::endl;
+
+	for (int i = 0; i < numChunks; i++)
+	{
+		chunks[i].convert();
+	}
 	while (running)
 	{
+		beginFrame = steady_clock::now();
+
 		handleEvents(); // handle events
 		view = cam.lookAt(); // update the camera
 
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, texture1);
-
 		s.use(); // setup shaders for rendering
 
-		glBindVertexArray(glBlockMeshData.VAO);
 		display->clear();
 
 		// all blocks use same view and projection data
 		s.setUniformMat4("view", view);
 		s.setUniformMat4("projection", projection);
 
-#if 0
-		for (int i = 0; i < numChunks; i++)
+		/*
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, face.size());
+		*/
+
+		for (Chunk& c : chunks)
 		{
-			for (int x = 0; x < 16; x++)
-			{
-				for (int z = 0; z < 16; z++)
-				{
-					for (int y = 0; y < 256; y++)
-					{
-						chunks[i][x][z][y].update(s);
-						chunks[i][x][z][y].draw();
-					}
-				}
-			}
+			c.draw(s);
 		}
-#endif 
-
-
-#if 0
-		for (int i = 0; i < blocks.size(); i++)
-		{
-			blocks[i].update(s);
-			blocks[i].draw();
-		}
-
-#endif
-
-		for (Chunk c : chunks)
-		{
-			c.updateAndDraw(s);
-		}
-
+		
 		display->display();
 
 		endFrame = steady_clock::now();
@@ -243,7 +238,6 @@ void Application::run()
 		if (elapsed.count() * 1000 < fpsMillisCap)
 		{
 			SDL_Delay(abs(fpsMillisCap - elapsed.count() * 1000));
-			//std::cout << "delaying by " << abs(fpsMillisCap - elapsed.count() * 1000) << " ms\n";
 		}
 	}
 }
