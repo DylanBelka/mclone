@@ -69,10 +69,14 @@ void Camera::updateRot(double x, double y)
 	yaw += xoffset;
 	pitch += yoffset;
 
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
+	bool constrictYaw = true;
 
+	if (constrictYaw)
+	{
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+	}
 	updateCameraVectors();
 }
