@@ -32,6 +32,7 @@ private:
 
 	Display *display;
 	Camera cam;
+	Shader shader;
 
 	SDL_Event e;
 	bool running;

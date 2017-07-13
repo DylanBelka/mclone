@@ -31,6 +31,8 @@ Application::Application(int w, int h)
 		std::cout << "Glew failed to initialize" << std::endl;
 	}
 
+	shader = Shader("vertex.glsl", "fragment.glsl");
+
 	glViewport(0, 0, w, h);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
@@ -119,8 +121,6 @@ void Application::handleEvents()
 
 void Application::run()
 {
-	Shader s("vertex.glsl", "fragment.glsl");
-
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -166,37 +166,33 @@ void Application::run()
 
 	const unsigned int numChunks = 100;
 
-	int x = 0;
-	int z = 0;
+	int cx = 0;
+	int cz = 0;
 
 	std::vector<Chunk> chunks;
 	for (int i = 0; i < numChunks; i++)
 	{
 		chunks.push_back(Chunk());
-		for (int j = 0; j < chunkSize; j++)
-		{
-			chunks[i].pos = glm::vec3(x, 0.0, z);
-			
-			if ((chunks[i].getBlockPos(j).x == 3 && chunks[i].getBlockPos(j).z == 3) ||
-				(chunks[i].getBlockPos(j).x == 4 && chunks[i].getBlockPos(j).z == 3) ||
-				(chunks[i].getBlockPos(j).x == 3 && chunks[i].getBlockPos(j).z == 4) ||
-				(chunks[i].getBlockPos(j).x == 4 && chunks[i].getBlockPos(j).z == 4)
-				)
-			{
-				chunks[i].blocks[j].type = Block::AIR; 
-			}
-			else
-			{
-				//std::cout << glm::to_string(chunks[i].getBlockPos(j)) << std::endl;
-				chunks[i].blocks[j].type = Block::STONE;
-			}
-		}
 
-		x += 16;
-		if (x == 16 * 16)
+		for (int y = 0; y < chunkHeight; y++)
 		{
-			x = 0;
-			z += 16;
+			for (int z = 0; z < chunkDepth; z++)
+			{
+				for (int x = 0; x < chunkDepth; x++)
+				{
+					if (x == 3 && z == 3 ||
+						x == 4 && z == 3 ||
+						x == 3 && z == 4 ||
+						x == 4 && z == 4)
+					{
+						chunks[i].getBlock(x, y, z).type = Block::AIR;
+					}
+					else
+					{
+						chunks[i].getBlock(x, y, z).type = Block::STONE;
+					}
+				}
+			}
 		}
 	}
 
@@ -204,8 +200,9 @@ void Application::run()
 
 	for (int i = 0; i < numChunks; i++)
 	{
-		chunks[i].convert();
+		chunks[i].buildModel();
 	}
+
 	while (running)
 	{
 		beginFrame = steady_clock::now();
@@ -213,22 +210,17 @@ void Application::run()
 		handleEvents(); // handle events
 		view = cam.lookAt(); // update the camera
 
-		s.use(); // setup shaders for rendering
+		shader.use(); // setup shaders for rendering
 
 		display->clear();
 
 		// all blocks use same view and projection data
-		s.setUniformMat4("view", view);
-		s.setUniformMat4("projection", projection);
-
-		/*
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, face.size());
-		*/
-
+		shader.setUniformMat4("view", view);
+		shader.setUniformMat4("projection", projection);
+		
 		for (Chunk& c : chunks)
 		{
-			c.draw(s);
+			c.draw(shader);
 		}
 		
 		display->display();
