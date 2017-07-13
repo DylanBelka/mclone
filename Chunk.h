@@ -20,11 +20,6 @@ const unsigned int chunkDepth = 16;
 
 const unsigned int chunkSize = chunkWidth * chunkDepth * chunkHeight;
 
-extern float vertices[180];
-
-void normalizeVertices();
-void normalizeFaceVertices();
-
 namespace Face {
 	enum FaceIndex
 	{
@@ -38,8 +33,6 @@ namespace Face {
 		NUM_FACES
 	};
 }
-
-std::vector<glm::vec3> getFace(Face::FaceIndex index);
 
 /****
 
@@ -55,23 +48,34 @@ public:
 	Chunk();
 	~Chunk();
 
-	void convert();
+	void buildModel();
 
-	void moveBlockTo(unsigned int index, glm::vec3 where) { blocks[index] = where; }
-	glm::vec3 getBlockPos(unsigned int index) { return blocks[index].getPos(); }
+	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
+	Block& getBlock(unsigned int x, unsigned int y, unsigned int z) { return blocksxyz[x][y][z]; }
 
 	void draw(Shader& s);
 
-public:
+	const glm::vec3 getBlockWorldPosition(glm::ivec3 blockPos) { return glm::vec3(chunkPosxz.x + blockPos.x, blockPos.y, chunkPosxz.y + blockPos.z); }
+
+	static Chunk createChunk();
+
+private:
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs);
 	
-	std::vector<Block> blocks;
+	std::vector<std::vector<std::vector<Block>>> blocksxyz;
+	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position
 
-	glm::vec3 pos;
+	enum
+	{
+		UVS = 0,
+		VERTS,
 
-	unsigned int vbo;
-	unsigned int uvvbo;
+		NUM_VBOS
+	};
+
+	unsigned int VBOS[NUM_VBOS];
 	unsigned int vao;
+	unsigned int modelLoc = -1;
 
 	unsigned int numVerts;
 };

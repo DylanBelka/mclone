@@ -1,48 +1,4 @@
 #include "Chunk.h"
-float vertices[] = {
-	// x   y      z			u	v
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-	0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-};
 
 static float faces[6][18] =
 {
@@ -158,17 +114,6 @@ float faceUVs[6][12] =
 	},
 };
 
-
-void normalizeVertices()
-{
-	for (int i = 0; i < 180 - 2; i += 5)
-	{
-		vertices[i] = vertices[i] / (float)chunkWidth; // x
-		vertices[i + 1] = vertices[i + 1] / (float)chunkHeight; // y
-		vertices[i + 2] = vertices[i + 2] / (float)chunkDepth; // z
-	}
-}
-
 /*	Converts a "world" space coordinate into 
 	an OpenGL vertex coordinate in range (-1.0, 1.0)
 */
@@ -181,32 +126,14 @@ glm::vec3 normalizeCoord(glm::vec3 c)
 	return glm::vec3(x, y, z);
 }
 
-void normalizeFaceVertices()
+Chunk::Chunk() :
+	blocksxyz(chunkWidth, std::vector<std::vector<Block>>(chunkHeight, std::vector<Block>(chunkDepth, Block()))) // creates a 16x256x16 3d vector of default blocks
 {
-	for (int i = 0; i < 6; i++)
-	{
-		for (int j = 0; j < 18; j += 3)
-		{
-			faces[i][j] = faces[i][j] / (float)chunkWidth; // x
-			faces[i][j + 1] = faces[i][j + 1] / (float)chunkHeight; // y
-			faces[i][j + 2] = faces[i][j + 2] / (float)chunkDepth; // z
-		}
-	}
-}
-
-Chunk::Chunk()
-{
-	for (int x = 0; x < chunkWidth; x++)
-	{
-		for (int z = 0; z < chunkDepth; z++)
-		{
-			for (int y = 0; y < chunkHeight; y++)
-			{
-				blocks.push_back(Block(glm::vec3(x, y, z)));
-			}
-		}
-	}
 	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(1, &VBOS[VERTS]);
+	glGenBuffers(1, &VBOS[UVS]);
 }
 
 Chunk::~Chunk()
@@ -238,11 +165,9 @@ std::vector<glm::vec2> getFaceUV(Face::FaceIndex index)
 	return uvs;
 }
 
-//#define ALL_CUBES
-
 // each chunk will have its own vbo and vao 
-// convert will convert the chunk's blocks into a single model that wil lbe stored using the vbo and vao
-void Chunk::convert()
+// convert will convert the chunk's blocks into a single model that will be stored using the vbo and vao
+void Chunk::buildModel()
 {
 	using namespace std::chrono;
 
@@ -283,18 +208,20 @@ void Chunk::convert()
 		{
 			for (int x = 0; x < chunkDepth; x++)
 			{
+//#define ALL_CUBES
+				// leave this method for debugging purposes g
 #ifdef ALL_CUBES
 				// this method is significantly slower in both generating the model and rendering
-				if (blocks[x + chunkWidth * (y + chunkHeight * z)].type != Block::AIR) // skip this block if it is just air
+				if (blocksxyz[x][y][z].type != Block::AIR) // skip this block if it is just air
 				{
 					for (int i = Face::FaceIndex::FRONT; i < Face::FaceIndex::NUM_FACES; i++)
 					{
 						std::vector<glm::vec3> face = getFace((Face::FaceIndex)i);
 						std::vector<glm::vec2> faceUV = getFaceUV((Face::FaceIndex)i);
-						
+
 						for (glm::vec3& vert : face)
 						{
-							vert = normalizeCoord(vert + blocks[x + chunkWidth * (y + chunkHeight * z)].getPos());
+							vert = normalizeCoord(vert + blocksxyz[x][y][z].getPos());
 							finalModel.push_back(vert);
 						}
 						for (glm::vec2& uv : faceUV)
@@ -303,62 +230,61 @@ void Chunk::convert()
 						}
 
 					}
-				}				
+				}
 #else
-				if (blocks[x + chunkWidth * (y + chunkHeight * z)].type != Block::AIR) // skip this block if it is just air
+				Block b = blocksxyz[x][y][z];
+				if (b.type != Block::AIR) // skip this block if it is just air
 				{
-					// 3d coords to 1d indices of blocks all around current block
-					int above = x + chunkWidth * ((y + 1) + chunkHeight * z);
-					int below = x + chunkWidth * ((y - 1) + chunkHeight * z);
-					int left = (x - 1) + chunkWidth * (y + chunkHeight * z);
-					int right = (x + 1) + chunkWidth * (y + chunkHeight * z);
-					int front = x + chunkWidth * (y + chunkHeight * (z + 1));
-					int back = x + chunkWidth * (y + chunkHeight * (z - 1));
+					glm::ivec3 bPos(x, y, z);
 
-					glm::vec3 pos = blocks[x + chunkWidth * (y + chunkHeight * z)].getPos();
-
-					// todo: rewrite this so its not a define
-#define pushFace(faceIndex) std::vector<glm::vec3> face = getFace(faceIndex); \
-							std::vector<glm::vec2> faceUV = getFaceUV(faceIndex); \
-							for (glm::vec3& vert : face) { \
-								vert = normalizeCoord(vert + blocks[x + chunkWidth * (y + chunkHeight * z)].getPos()); \
-								finalModel.push_back(vert); } \
-							for (glm::vec2& uv : faceUV) uvs.push_back(uv);
-
-					//std::cout << glm::to_string(pos) << " " << (int)pos.x << " " << (int)pos.y << " " << (int)pos.z << " " << std::endl;
-
+					auto pFace = [&finalModel, &uvs, &bPos](Face::FaceIndex findex) // wew a lambda function
+					{
+						std::vector<glm::vec3> face = getFace(findex);
+						std::vector<glm::vec2> faceUV = getFaceUV(findex);
+						for (glm::vec3& vert : face) // push each vertex of the face after normalizing it
+						{
+							vert = normalizeCoord(vert + glm::vec3(bPos)); // shift the vertex over by the position of the block
+							finalModel.push_back(vert);
+						}
+						for (glm::vec2& uv : faceUV)
+						{
+							uvs.push_back(uv);
+						}
+					};
+					
+					// check each direction around the current block and add a face in that direction if there is nothing there, ie air
+					
 					// above
-					if (((int)pos.y) >= chunkHeight - 1 || (above < blocks.size() && blocks[above].type == Block::AIR))
+					if (((int)bPos.y) >= chunkHeight - 1 || (bPos.y + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y + 1][bPos.z].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::TOP);
-					}	
+						pFace(Face::FaceIndex::TOP);
+					}
 					// below
-					if (((int)pos.y) <= 0 || (below < blocks.size() && blocks[below].type == Block::AIR))
+					if (((int)bPos.y) <= 0 || (y - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y - 1][bPos.z].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::BOTTOM);
+						pFace(Face::FaceIndex::BOTTOM);
 					}
 					// left
-					if (((int)pos.x) <= 0 || (left < blocks.size() && blocks[left].type == Block::AIR))
+					if (((int)bPos.x) <= 0 || (bPos.x - 1 < chunkHeight && blocksxyz[bPos.x - 1][bPos.y][bPos.z].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::LEFT);
+						pFace(Face::FaceIndex::LEFT);
 					}
 					// right
-					if (((int)pos.x) == chunkWidth - 1 || (right < blocks.size() && blocks[right].type == Block::AIR))
+					if (((int)bPos.x) == chunkWidth - 1 || (bPos.x + 1 < chunkHeight && blocksxyz[bPos.x + 1][bPos.y][bPos.z].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::RIGHT);
+						pFace(Face::FaceIndex::RIGHT);
 					}
 					// back 
-					if (((int)pos.z) >= chunkDepth - 1 || (front < blocks.size() && blocks[front].type == Block::AIR))
+					if (((int)bPos.z) >= chunkDepth - 1 || (bPos.z + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z + 1].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::BACK);
+						pFace(Face::FaceIndex::BACK);
 					}
 					// front
-					if (((int)pos.z) <= 0 || (back < blocks.size() && blocks[back].type == Block::AIR))
+					if (((int)bPos.z) <= 0 || (bPos.z - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z - 1].type == Block::AIR))
 					{
-						pushFace(Face::FaceIndex::FRONT);
+						pFace(Face::FaceIndex::FRONT);
 					}
 				}
-#undef pushFace
 #endif
 			}
 		}
@@ -375,18 +301,13 @@ void Chunk::convert()
 
 void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs)
 {
-	glBindVertexArray(vao);
-
-	glGenBuffers(1, &vbo);
-	glGenBuffers(1, &uvvbo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOS[VERTS]);
 	glBufferData(GL_ARRAY_BUFFER, model.size() * sizeof(glm::vec3), &model[0], GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, uvvbo);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOS[UVS]);
 	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -398,17 +319,34 @@ void Chunk::draw(Shader& s)
 	glBindVertexArray(vao);
 
 	glm::mat4 m;
-	m = glm::translate(m, pos);
+	m = glm::translate(m, glm::vec3(chunkPosxz.x, 0.0, chunkPosxz.y));
+	// by normalizing coordinates earlier when defining mesh, all coordinates are in the range (-1, 1)
+	// and are extremely small as a result
+	// this scale returns them to their normal size with 1x1x1 cubes
 	m = glm::scale(m, glm::vec3((float)chunkWidth, (float)chunkHeight, (float)chunkDepth));
 	
-	s.setUniformMat4("model", m);
+	if (modelLoc == -1)
+	{
+		modelLoc = s.getUniformLocation("model");
+	}
+
+	s.setUniformMat4(m, modelLoc);
 
 	if (numVerts > 0)
 	{
 		glDrawArrays(GL_TRIANGLES, 0, numVerts);
 	}
-	else
-	{
-		//std::cout << "drwaing empty chunk" << std::endl;
-	}
+}
+
+void Chunk::moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where)
+{
+	Block b = blocksxyz[blockPos.x][blockPos.y][blockPos.z];
+	blocksxyz[where.x][where.y ][where.z] = b;
+}
+
+Chunk Chunk::createChunk()
+{
+	Chunk c;
+
+	return c;
 }
