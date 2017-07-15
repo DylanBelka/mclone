@@ -22,6 +22,8 @@ public:
 
 	glm::mat4 lookAt();
 
+	const glm::vec3 getPos() { return pos; }
+
 private:
 
 	void updateCameraVectors();
