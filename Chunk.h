@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <chrono>
+#include <mutex>
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -37,7 +38,7 @@ namespace Face {
 /****
 
 	A chunk holds 16 * 16 * 256 blocks 
-	Handles converting std::vector<Block> into a single chunk mesh
+	Handles converting Blocks in chunk into a single chunk mesh
 	For faster drawing + fewer draw calls
 	
 ****/
@@ -45,6 +46,8 @@ namespace Face {
 class Chunk
 {
 public:
+	friend class World;
+
 	Chunk();
 	~Chunk();
 
@@ -52,14 +55,16 @@ public:
 
 	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
 	Block& getBlock(unsigned int x, unsigned int y, unsigned int z) { return blocksxyz[x][y][z]; }
+	const glm::vec3 getBlockWorldPosition(glm::ivec3 blockPos) { return glm::vec3(chunkPosxz.x + blockPos.x, blockPos.y, chunkPosxz.y + blockPos.z); }
 
 	void draw(Shader& s);
 
-	const glm::vec3 getBlockWorldPosition(glm::ivec3 blockPos) { return glm::vec3(chunkPosxz.x + blockPos.x, blockPos.y, chunkPosxz.y + blockPos.z); }
+	void generateChunk(int seed);
 
-	static Chunk createChunk();
+public:
+	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }
 
-private:
+protected:
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs);
 	
 	std::vector<std::vector<std::vector<Block>>> blocksxyz;
