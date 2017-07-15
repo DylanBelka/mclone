@@ -169,6 +169,7 @@ std::vector<glm::vec2> getFaceUV(Face::FaceIndex index)
 // convert will convert the chunk's blocks into a single model that will be stored using the vbo and vao
 void Chunk::buildModel()
 {
+#ifdef DEBUG
 	using namespace std::chrono;
 
 	steady_clock::time_point beginFrame = steady_clock::now();
@@ -177,6 +178,8 @@ void Chunk::buildModel()
 	duration<double> elapsed = duration<double>(endFrame - beginFrame);
 	
 	beginFrame = steady_clock::now();
+
+#endif // DEBUG
 
 	std::vector<glm::vec3> finalModel;
 	std::vector<glm::vec2> uvs;
@@ -209,7 +212,7 @@ void Chunk::buildModel()
 			for (int x = 0; x < chunkDepth; x++)
 			{
 //#define ALL_CUBES
-				// leave this method for debugging purposes g
+				// leave this method for debugging purposes 
 #ifdef ALL_CUBES
 				// this method is significantly slower in both generating the model and rendering
 				if (blocksxyz[x][y][z].type != Block::AIR) // skip this block if it is just air
@@ -255,32 +258,32 @@ void Chunk::buildModel()
 					// check each direction around the current block and add a face in that direction if there is nothing there, ie air
 					
 					// above
-					if (((int)bPos.y) >= chunkHeight - 1 || (bPos.y + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y + 1][bPos.z].type == Block::AIR))
+					if (bPos.y >= chunkHeight - 1 || (bPos.y + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y + 1][bPos.z].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::TOP);
 					}
 					// below
-					if (((int)bPos.y) <= 0 || (y - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y - 1][bPos.z].type == Block::AIR))
+					if (bPos.y <= 0 || (y - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y - 1][bPos.z].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::BOTTOM);
 					}
 					// left
-					if (((int)bPos.x) <= 0 || (bPos.x - 1 < chunkHeight && blocksxyz[bPos.x - 1][bPos.y][bPos.z].type == Block::AIR))
+					if (bPos.x <= 0 || (bPos.x - 1 < chunkHeight && blocksxyz[bPos.x - 1][bPos.y][bPos.z].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::LEFT);
 					}
 					// right
-					if (((int)bPos.x) == chunkWidth - 1 || (bPos.x + 1 < chunkHeight && blocksxyz[bPos.x + 1][bPos.y][bPos.z].type == Block::AIR))
+					if (bPos.x == chunkWidth - 1 || (bPos.x + 1 < chunkHeight && blocksxyz[bPos.x + 1][bPos.y][bPos.z].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::RIGHT);
 					}
 					// back 
-					if (((int)bPos.z) >= chunkDepth - 1 || (bPos.z + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z + 1].type == Block::AIR))
+					if (bPos.z >= chunkDepth - 1 || (bPos.z + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z + 1].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::BACK);
 					}
 					// front
-					if (((int)bPos.z) <= 0 || (bPos.z - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z - 1].type == Block::AIR))
+					if (bPos.z <= 0 || (bPos.z - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z - 1].type == Block::AIR))
 					{
 						pFace(Face::FaceIndex::FRONT);
 					}
@@ -290,13 +293,20 @@ void Chunk::buildModel()
 		}
 	}
 
+#ifdef DEBUG
+
 	endFrame = steady_clock::now();
 
 	elapsed = duration<double>(endFrame - beginFrame);
 	std::cout << "done took: " << elapsed.count() << std::endl;
 
+#endif // DEBUG
+
 	numVerts = finalModel.size();
+	static std::mutex m;
+	m.lock();
 	sendModelDataToGL(finalModel, uvs);
+	m.unlock();
 }
 
 void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs)
@@ -320,6 +330,7 @@ void Chunk::draw(Shader& s)
 
 	glm::mat4 m;
 	m = glm::translate(m, glm::vec3(chunkPosxz.x, 0.0, chunkPosxz.y));
+
 	// by normalizing coordinates earlier when defining mesh, all coordinates are in the range (-1, 1)
 	// and are extremely small as a result
 	// this scale returns them to their normal size with 1x1x1 cubes
@@ -344,9 +355,19 @@ void Chunk::moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where)
 	blocksxyz[where.x][where.y ][where.z] = b;
 }
 
-Chunk Chunk::createChunk()
+void Chunk::generateChunk(int seed)
 {
-	Chunk c;
+	srand(seed);
 
-	return c;
+	for (int x = 0; x < chunkWidth; x++)
+	{
+		for (int z = 0; z < chunkDepth; z++)
+		{
+			int height = rand() % (chunkHeight / 16);
+			for (int y = 0; y < height; y++)
+			{
+				blocksxyz[x][y][z].type = Block::STONE;
+			}
+		}
+	}
 }
