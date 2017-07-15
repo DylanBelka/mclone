@@ -104,6 +104,11 @@ void Application::handleEvents()
 				}
 				break;
 			}
+			case SDLK_SPACE: // spacebar
+			{
+				std::cout << glm::to_string(cam.getPos()) << std::endl;
+				break;
+			}
 			}
 			break;
 		}
@@ -133,7 +138,7 @@ void Application::run()
 	// load image, create texture and generate mipmaps
 	int w, h, nrChannels;
 	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("grass.png", &w, &h, &nrChannels, 0);
+	unsigned char *data = stbi_load("textures.png", &w, &h, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -156,7 +161,7 @@ void Application::run()
 
 	duration<double> elapsed = duration<double>(endFrame - beginFrame);
 
-	const double targetFPS = 10000;
+	const double targetFPS = 2500;
 	const double fpsMillisCap = 1.0 / targetFPS * 1000.0; // 1 frame per (1 / targetfps) ms
 
 	glm::mat4 view;
@@ -164,46 +169,11 @@ void Application::run()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
 
-	const unsigned int numChunks = 100;
+	const unsigned int numChunks = 1024;
+	
+	world.generateWorld(numChunks);
 
-	int cx = 0;
-	int cz = 0;
-
-	std::vector<Chunk> chunks;
-	for (int i = 0; i < numChunks; i++)
-	{
-		chunks.push_back(Chunk());
-
-		for (int y = 0; y < chunkHeight; y++)
-		{
-			for (int z = 0; z < chunkDepth; z++)
-			{
-				for (int x = 0; x < chunkDepth; x++)
-				{
-					if (x == 3 && z == 3 ||
-						x == 4 && z == 3 ||
-						x == 3 && z == 4 ||
-						x == 4 && z == 4)
-					{
-						chunks[i].getBlock(x, y, z).type = Block::AIR;
-					}
-					else
-					{
-						chunks[i].getBlock(x, y, z).type = Block::STONE;
-					}
-				}
-			}
-		}
-	}
-
-	std::cout << "done creating chunks" << std::endl;
-
-	for (int i = 0; i < numChunks; i++)
-	{
-		chunks[i].buildModel();
-	}
-
-	while (running)
+	while (running) 
 	{
 		beginFrame = steady_clock::now();
 
@@ -218,11 +188,8 @@ void Application::run()
 		shader.setUniformMat4("view", view);
 		shader.setUniformMat4("projection", projection);
 		
-		for (Chunk& c : chunks)
-		{
-			c.draw(shader);
-		}
-		
+		world.draw(shader);
+
 		display->display();
 
 		endFrame = steady_clock::now();

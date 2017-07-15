@@ -17,6 +17,7 @@
 #include "Camera.h"
 #include "Block.h"
 #include "Chunk.h"
+#include "World.h"
 
 class Application
 {
@@ -31,6 +32,7 @@ private:
 	void handleEvents();
 
 	Display *display;
+	World world;
 	Camera cam;
 	Shader shader;
 
