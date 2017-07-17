@@ -216,30 +216,6 @@ void Chunk::buildModel()
 		{
 			for (int x = 0; x < chunkDepth; x++)
 			{
-//#define ALL_CUBES
-				// leave this method for debugging purposes 
-#ifdef ALL_CUBES
-				// this method is significantly slower in both generating the model and rendering
-				if (blocksxyz[x][y][z].type != Block::AIR) // skip this block if it is just air
-				{
-					for (int i = Face::FaceIndex::FRONT; i < Face::FaceIndex::NUM_FACES; i++)
-					{
-						std::vector<glm::vec3> face = getFace((Face::FaceIndex)i);
-						std::vector<glm::vec2> faceUV = getFaceUV((Face::FaceIndex)i);
-
-						for (glm::vec3& vert : face)
-						{
-							vert = normalizeCoord(vert + blocksxyz[x][y][z].getPos());
-							finalModel.push_back(vert);
-						}
-						for (glm::vec2& uv : faceUV)
-						{
-							uvs.push_back(uv);
-						}
-
-					}
-				}
-#else
 				Block b = blocksxyz[x][y][z];
 				if (b.type != Block::AIR) // skip this block if it is just air
 				{
