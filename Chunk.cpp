@@ -271,7 +271,6 @@ void Chunk::buildModel()
 						pFace(Face::FaceIndex::FRONT);
 					}
 				}
-#endif
 			}
 		}
 	}
