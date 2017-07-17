@@ -5,15 +5,28 @@ World::World()
 
 }
 
-const Block& World::getBlockAt(const glm::vec3& pos)
+Block& World::getBlockAt(const glm::vec3& pos)
 {
-	
+	Chunk* thisChunk = &chunks[getChunkIndex(pos)];
+
+	glm::ivec3 bpos((int)pos.x % chunkWidth, (int)pos.y % chunkHeight, (int)pos.z % chunkDepth);
+
+	return thisChunk->getBlockAt(bpos);
+}
+
+int World::getChunkIndex(const glm::vec3& pos)
+{
+	glm::ivec2 chunkPosxz(pos.x / chunkWidth, pos.z / chunkDepth);
+
+	std::cout << chunkPosxz.y * numRows + chunkPosxz.x << std::endl;
+
+	return chunkPosxz.y * numRows + chunkPosxz.x;
 }
 
 void World::addNewChunk(World* w, int x, int z)
 {
 	Chunk c;
-	c.generateChunk(time(NULL));
+	c.generateChunk(10);
 	c.buildModel();
 	c.moveChunkWorldSpace(glm::vec2(x, z));
 	static std::mutex mut;
@@ -24,7 +37,8 @@ void World::addNewChunk(World* w, int x, int z)
 
 void World::generateWorld(int numChunks)
 {
-	int w = sqrt(numChunks); // space chunks out in a grid of sqrt(numChunks) x sqrt(numChunks)
+	numRows = sqrt(numChunks); // space chunks out in a grid of sqrt(numChunks) x sqrt(numChunks)
+	this->numChunks = numChunks;
 
 	using namespace std::chrono;
 
@@ -40,6 +54,13 @@ void World::generateWorld(int numChunks)
 	else if (totalSysThreads == 1)
 	{
 		std::cout << "system only has one thread, using non multi-threaded world generation\n";
+		generateWorldNoThread(numChunks);
+		return;
+	}
+
+	if (numRows * numRows != numChunks || numChunks % 2 != 0) // threaded version does not work well with odd number of chunks and non perfect squares
+	{
+		std::cout << "using non threaded world generation\n";
 		generateWorldNoThread(numChunks);
 		return;
 	}
@@ -62,17 +83,17 @@ void World::generateWorld(int numChunks)
 		{
 			threads[j] = std::thread(addNewChunk, this, x, z);
 			x += chunkWidth;
-			if (x >= chunkWidth * w)
+			if (x >= chunkWidth * numRows)
 			{
 				x = 0;
-				z -= 16;
+				z += 16;
 			}
 		}
 
 		addNewChunk(this, x, z); // begin work on main thread
 
 		x += chunkWidth;
-		if (x >= chunkWidth * w)
+		if (x >= chunkWidth * numRows)
 		{
 			x = 0;
 			z -= 16;
@@ -92,7 +113,8 @@ void World::generateWorld(int numChunks)
 
 void World::generateWorldNoThread(int numChunks)
 {
-	int w = sqrt(numChunks); // space chunks out in a grid of sqrt(numChunks) x sqrt(numChunks)
+	numRows = sqrt(numChunks); // space chunks out in a grid of sqrt(numChunks) x sqrt(numChunks)
+	this->numChunks = numChunks;
 
 	using namespace std::chrono;
 
@@ -111,7 +133,7 @@ void World::generateWorldNoThread(int numChunks)
 		addNewChunk(this, x, z); // generate the chunk
 
 		x += chunkWidth;
-		if (x >= chunkWidth * w)
+		if (x >= chunkWidth * numRows)
 		{
 			x = 0;
 			z -= 16;
