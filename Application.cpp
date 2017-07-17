@@ -31,18 +31,13 @@ Application::Application(int w, int h)
 		std::cout << "Glew failed to initialize" << std::endl;
 	}
 
-	checkGlErr(__LINE__);
-
 	shader = Shader("vertex.glsl", "fragment.glsl");
-
 
 	glViewport(0, 0, w, h);
 
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(.5, .67, 1, 1.0);
 	glEnable(GL_DEPTH_TEST);
 	running = true;
-
-
 }
 
 Application::~Application()
@@ -112,7 +107,7 @@ void Application::handleEvents()
 			}
 			case SDLK_SPACE: // spacebar
 			{
-				std::cout << glm::to_string(cam.getPos()) << std::endl;
+				std::cout << "Camera pos: " << glm::to_string(cam.getPos()) << std::endl;
 				break;
 			}
 			case SDLK_r:
@@ -121,10 +116,11 @@ void Application::handleEvents()
 				{
 					world.updateChunk(i);
 				}
+				break;
 			}
 			case SDLK_e:
 			{
-				shader = Shader("vertex.glsl", "fragment.glsl");
+				//shader = Shader("vertex.glsl", "fragment.glsl");
 				break;
 			}
 			}
@@ -137,8 +133,14 @@ void Application::handleEvents()
 			case SDL_BUTTON_LEFT:
 			{
 				std::cout << "left button pressed\n";
-				std::cout << glm::to_string(cam.getFront()) << std::endl;
-				std::cout << world.getBlockAt(glm::vec3(cam.getPos())).type << std::endl;
+				std::cout << "Camera front: " << glm::to_string(cam.getFront()) << std::endl;
+				//std::cout << world.getBlockAt(glm::vec3(cam.getPos())).type << std::endl;
+				//world.getBlockAt(glm::vec3(cam.getPos())).type = Block::AIR;
+
+				std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
+				world.updateChunk(world.getChunkIndex(cam.getPos()));
+
+				// start here
 
 				break;
 			}
@@ -162,7 +164,6 @@ void Application::run()
 	// set the texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// load image, create texture and generate mipmaps
@@ -181,7 +182,7 @@ void Application::run()
 
 	stbi_image_free(data);
 
-	glActiveTexture(texture);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	using namespace std::chrono;
@@ -199,7 +200,7 @@ void Application::run()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
 
-	const unsigned int numChunks = 4;
+	const unsigned int numChunks = 1024;
 	
 	world.generateWorld(numChunks);
 
