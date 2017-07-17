@@ -9,6 +9,7 @@
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <gtx/intersect.hpp>
 
 #include "stb_image.h"
 

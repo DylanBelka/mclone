@@ -21,8 +21,8 @@ Application::Application(int w, int h)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, GL_TRUE);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-	SDL_ShowCursor(SDL_DISABLE);
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	//SDL_ShowCursor(SDL_DISABLE);
+	//SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	display = new Display(w, h);
 
@@ -31,12 +31,18 @@ Application::Application(int w, int h)
 		std::cout << "Glew failed to initialize" << std::endl;
 	}
 
+	checkGlErr(__LINE__);
+
 	shader = Shader("vertex.glsl", "fragment.glsl");
 
+
 	glViewport(0, 0, w, h);
+
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
 	running = true;
+
+
 }
 
 Application::~Application()
@@ -109,11 +115,35 @@ void Application::handleEvents()
 				std::cout << glm::to_string(cam.getPos()) << std::endl;
 				break;
 			}
+			case SDLK_r:
+			{
+				for (int i = 0; i < world.getNumChunks(); i++)
+				{
+					world.updateChunk(i);
+				}
+			}
+			case SDLK_e:
+			{
+				shader = Shader("vertex.glsl", "fragment.glsl");
+				break;
+			}
 			}
 			break;
 		}
 		case SDL_MOUSEBUTTONDOWN:
 		{
+			switch (e.button.button)
+			{
+			case SDL_BUTTON_LEFT:
+			{
+				std::cout << "left button pressed\n";
+				std::cout << glm::to_string(cam.getFront()) << std::endl;
+				std::cout << world.getBlockAt(glm::vec3(cam.getPos())).type << std::endl;
+
+				break;
+			}
+			}
+
 			break;
 		}
 		case SDL_MOUSEMOTION:
@@ -142,7 +172,7 @@ void Application::run()
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
+		//glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
 	{
@@ -169,7 +199,7 @@ void Application::run()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
 
-	const unsigned int numChunks = 1024;
+	const unsigned int numChunks = 4;
 	
 	world.generateWorld(numChunks);
 
