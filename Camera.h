@@ -22,7 +22,8 @@ public:
 
 	glm::mat4 lookAt();
 
-	const glm::vec3 getPos() { return pos; }
+	const glm::vec3& getPos() { return pos; }
+	const glm::vec3& getFront() { return front; }
 
 private:
 
