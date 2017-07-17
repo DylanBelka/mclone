@@ -7,12 +7,12 @@ flat in int blockTypeIndex;
 
 uniform sampler2D ourTexture;
 
-uniform vec2 blockTypeTexCoordModifiers[5] = 
+const uniform vec2 blockTypeTexCoordModifiers[5] = 
 {
 	vec2(0.0, 0.0), // garbage/air
 	vec2(0.00, 48.0), // grass 
 	vec2(16.0, 48.0), // grass top
-	vec2(32.0, 48.0), // stone, todo
+	vec2(32.0, 48.0), // dirt
 	vec2(48.0, 48.0), // garbage
 };
 
