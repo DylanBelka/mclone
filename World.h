@@ -31,7 +31,7 @@ public:
 	unsigned int getNumChunks() { return numChunks; }
 
 private:
-	static void addNewChunk(World* w, int x, int z);
+	//static void addNewChunk(World* w, int x, int z);
 
 	std::vector<Chunk> chunks;
 

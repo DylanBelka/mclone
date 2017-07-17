@@ -38,23 +38,24 @@ public:
 	~Chunk();
 
 	void buildModel();
+	void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
 	void draw(Shader& s);
 
 	void generateChunk(int seed);
 
-public:
+protected:
 	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }
 
 	Block& getBlockAt(unsigned int x, unsigned int y, unsigned int z) { return blocksxyz[x][y][z]; }
 	Block& getBlockAt(glm::ivec3 pos) { return blocksxyz[pos.x][pos.y][pos.z]; }
 	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
 
-	std::vector<std::vector<std::vector<Block>>> blocksxyz;
-public:
-	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position
-
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
-	
+
+private:
+	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position
+	std::vector<std::vector<std::vector<Block>>> blocksxyz;
+
 	enum
 	{
 		UVS = 0,
