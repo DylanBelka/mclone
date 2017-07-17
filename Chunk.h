@@ -21,20 +21,6 @@ const unsigned int chunkDepth = 16;
 
 const unsigned int chunkSize = chunkWidth * chunkDepth * chunkHeight;
 
-namespace Face {
-	enum FaceIndex
-	{
-		FRONT,
-		BACK,
-		LEFT,
-		RIGHT,
-		BOTTOM,
-		TOP,
-
-		NUM_FACES
-	};
-}
-
 /****
 
 	A chunk holds 16 * 16 * 256 blocks 
@@ -52,11 +38,6 @@ public:
 	~Chunk();
 
 	void buildModel();
-
-	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
-	Block& getBlock(unsigned int x, unsigned int y, unsigned int z) { return blocksxyz[x][y][z]; }
-	const glm::vec3 getBlockWorldPosition(glm::ivec3 blockPos) { return glm::vec3(chunkPosxz.x + blockPos.x, blockPos.y, chunkPosxz.y + blockPos.z); }
-
 	void draw(Shader& s);
 
 	void generateChunk(int seed);
@@ -64,16 +45,21 @@ public:
 public:
 	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }
 
-protected:
-	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs);
-	
+	Block& getBlockAt(unsigned int x, unsigned int y, unsigned int z) { return blocksxyz[x][y][z]; }
+	Block& getBlockAt(glm::ivec3 pos) { return blocksxyz[pos.x][pos.y][pos.z]; }
+	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
+
 	std::vector<std::vector<std::vector<Block>>> blocksxyz;
+public:
 	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position
 
+	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
+	
 	enum
 	{
 		UVS = 0,
 		VERTS,
+		BLOCK_TYPES,
 
 		NUM_VBOS
 	};

@@ -132,8 +132,10 @@ Chunk::Chunk() :
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glGenBuffers(1, &VBOS[VERTS]);
-	glGenBuffers(1, &VBOS[UVS]);
+	for (int i = 0; i < NUM_VBOS; i++)
+	{
+		glGenBuffers(1, &VBOS[i]);
+	}
 }
 
 Chunk::~Chunk()
@@ -169,6 +171,8 @@ std::vector<glm::vec2> getFaceUV(Face::FaceIndex index)
 // convert will convert the chunk's blocks into a single model that will be stored using the vbo and vao
 void Chunk::buildModel()
 {
+//#define DEBUG
+
 #ifdef DEBUG
 	using namespace std::chrono;
 
@@ -178,11 +182,12 @@ void Chunk::buildModel()
 	duration<double> elapsed = duration<double>(endFrame - beginFrame);
 	
 	beginFrame = steady_clock::now();
-
+	
 #endif // DEBUG
 
 	std::vector<glm::vec3> finalModel;
 	std::vector<glm::vec2> uvs;
+	std::vector<int> blockTypeIndices;
 
 	/* ALGORITHM
 	
@@ -240,7 +245,7 @@ void Chunk::buildModel()
 				{
 					glm::ivec3 bPos(x, y, z);
 
-					auto pFace = [&finalModel, &uvs, &bPos](Face::FaceIndex findex) // wew a lambda function
+					auto pFace = [&b, &finalModel, &uvs, &bPos, &blockTypeIndices](Face::FaceIndex findex) // wew a lambda function
 					{
 						std::vector<glm::vec3> face = getFace(findex);
 						std::vector<glm::vec2> faceUV = getFaceUV(findex);
@@ -248,6 +253,8 @@ void Chunk::buildModel()
 						{
 							vert = normalizeCoord(vert + glm::vec3(bPos)); // shift the vertex over by the position of the block
 							finalModel.push_back(vert);
+
+							blockTypeIndices.push_back(b.type + b.uniqueFaceIndexOffset(findex));
 						}
 						for (glm::vec2& uv : faceUV)
 						{
@@ -305,23 +312,26 @@ void Chunk::buildModel()
 	numVerts = finalModel.size();
 	static std::mutex m;
 	m.lock();
-	sendModelDataToGL(finalModel, uvs);
+	sendModelDataToGL(finalModel, uvs, blockTypeIndices);
 	m.unlock();
 }
 
-void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs)
+void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, VBOS[VERTS]);
 	glBufferData(GL_ARRAY_BUFFER, model.size() * sizeof(glm::vec3), &model[0], GL_STATIC_DRAW);
-
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBOS[UVS]);
 	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
-
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOS[BLOCK_TYPES]);
+	glBufferData(GL_ARRAY_BUFFER, blockTypeIndices.size() * sizeof(int), &blockTypeIndices[0], GL_STATIC_DRAW);
+	glVertexAttribIPointer(2, 1, GL_INT, 0, (void*)0);
+	glEnableVertexAttribArray(2);
 }
 
 void Chunk::draw(Shader& s)
@@ -366,7 +376,7 @@ void Chunk::generateChunk(int seed)
 			int height = rand() % (chunkHeight / 16);
 			for (int y = 0; y < height; y++)
 			{
-				blocksxyz[x][y][z].type = Block::STONE;
+				blocksxyz[x][y][z].type = Block::GRASS;
 			}
 		}
 	}
