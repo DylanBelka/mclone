@@ -15,6 +15,7 @@
 class Shader
 {
 public:
+	Shader() = default;
 	Shader(std::string vertShaderPath, std::string fragShaderPath);
 	~Shader();
 

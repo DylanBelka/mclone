@@ -16,6 +16,18 @@ Shader::Shader(std::string vertShaderPath, std::string fragShaderPath)
 	glUseProgram(ID);
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
+
+	GLenum err = glGetError();
+
+	if (err != GL_NO_ERROR)
+	{
+		std::cout << "OpenGL shader error. Error code: " << err << "\nPrinting log...\n\n";
+		const int logLen = 1024;
+		int len = 0;
+		char log[logLen];
+		glGetProgramInfoLog(ID, logLen, &len, log);
+		std::cout << log << std::endl;
+	}
 }
 
 Shader::~Shader()
