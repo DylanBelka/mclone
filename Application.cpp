@@ -21,8 +21,8 @@ Application::Application(int w, int h)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, GL_TRUE);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-	//SDL_ShowCursor(SDL_DISABLE);
-	//SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_ShowCursor(SDL_DISABLE);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	display = new Display(w, h);
 
@@ -134,13 +134,12 @@ void Application::handleEvents()
 			{
 				std::cout << "left button pressed\n";
 				std::cout << "Camera front: " << glm::to_string(cam.getFront()) << std::endl;
-				//std::cout << world.getBlockAt(glm::vec3(cam.getPos())).type << std::endl;
-				//world.getBlockAt(glm::vec3(cam.getPos())).type = Block::AIR;
 
-				std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
-				world.updateChunk(world.getChunkIndex(cam.getPos()));
-
-				// start here
+				if (world.destroyBlockAt(cam.getPos(), cam.getFront()))
+				{
+					std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
+					world.updateChunk(world.getChunkIndex(cam.getPos()));
+				}
 
 				break;
 			}
@@ -151,6 +150,7 @@ void Application::handleEvents()
 		case SDL_MOUSEMOTION:
 		{
 			cam.updateRot(e.motion.x, e.motion.y);
+			break;
 		}
 		}
 	}
@@ -202,7 +202,7 @@ void Application::run()
 
 	const unsigned int numChunks = 1024;
 	
-	world.generateWorld(numChunks);
+	world.generateWorld(numChunks, time(NULL));
 
 	while (running) 
 	{
@@ -225,9 +225,5 @@ void Application::run()
 
 		endFrame = steady_clock::now();
 		elapsed = duration<double>(endFrame - beginFrame);
-		if (elapsed.count() * 1000 < fpsMillisCap)
-		{
-			SDL_Delay(abs(fpsMillisCap - elapsed.count() * 1000));
-		}
 	}
 }
