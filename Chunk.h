@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <random>
 
 #include <chrono>
 #include <mutex>
@@ -11,6 +12,7 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtx/string_cast.hpp>
+#include <gtc/noise.hpp>
 
 #include "Block.h"
 #include "Shader.h"
@@ -20,6 +22,8 @@ const unsigned int chunkHeight = 256;
 const unsigned int chunkDepth = 16;
 
 const unsigned int chunkSize = chunkWidth * chunkDepth * chunkHeight;
+
+float map(float x, float xmin, float xmax, float dmin, float dmax);
 
 /****
 
@@ -41,7 +45,7 @@ public:
 	void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
 	void draw(Shader& s);
 
-	void generateChunk(int seed);
+	void generateChunk(const int minHeight, const int maxHeight, const glm::vec2& poff);
 
 protected:
 	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }

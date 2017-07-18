@@ -392,6 +392,8 @@ void Chunk::buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::
 
 void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices)
 {
+	glBindVertexArray(vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, VBOS[VERTS]);
 	glBufferData(GL_ARRAY_BUFFER, model.size() * sizeof(glm::vec3), &model[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -439,19 +441,42 @@ void Chunk::moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where)
 	blocksxyz[where.x][where.y ][where.z] = b;
 }
 
-void Chunk::generateChunk(int seed)
+float map(float x, float xmin, float xmax, float dmin, float dmax)
 {
-	srand(seed);
+	return (x - xmin) / (xmax - xmin) * (dmax - dmin) + dmin;
+}
+
+void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec2& poff)
+{
+	const float inc = .03;
+
+	// begin the perlin offset at the coordinate of the chunk right next to it
+	glm::vec2 perlinOffset(poff.x * inc, poff.y * inc);
+
+	float zResetVal = perlinOffset.y;
 
 	for (int x = 0; x < chunkWidth; x++)
 	{
+		perlinOffset.y = zResetVal;
 		for (int z = 0; z < chunkDepth; z++)
 		{
-			int height = rand() % (chunkHeight / 16);
+			float noise = glm::perlin(perlinOffset);
+
+			int height = map(noise, -1.0, 1.0, minHeight, maxHeight);
+
 			for (int y = 0; y < height; y++)
 			{
-				blocksxyz[x][y][z].type = Block::DIRT;
+				if (y == height - 1) // max height
+				{
+					blocksxyz[x][y][z].type = Block::GRASS;
+				}
+				else
+				{
+					blocksxyz[x][y][z].type = Block::DIRT;
+				}
 			}
+			perlinOffset.y += inc;
 		}
+		perlinOffset.x += inc;
 	}
 }
