@@ -14,35 +14,45 @@ Block& World::getBlockAt(const glm::vec3& pos)
 	return thisChunk->getBlockAt(bpos);
 }
 
-Block& World::getBlockReach(const glm::vec3& startingPos, const glm::vec3& front)
+
+bool World::destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach)
 {
-	//return block;
-}
+	glm::vec3 searchPos = startingPos;
 
-bool World::destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front)
-{
-	const float maxReach = 4.0;
-
-	glm::vec3 destrPos = startingPos;
-
-	while (glm::distance(destrPos, startingPos) < maxReach)
+	while (glm::distance(searchPos, startingPos) < maxReach)
 	{
-		std::cout << "still continuing: " << glm::to_string(destrPos) << std::endl;
+		searchPos += front;
 
-		destrPos += front;
-
-		if (getBlockAt(destrPos).type != Block::AIR)
+		if (getBlockAt(searchPos).type != Block::AIR)
 		{
-			std::cout << "found non air block at: " << glm::to_string(destrPos) << std::endl;
-			getBlockAt(destrPos).type = Block::AIR;
+			getBlockAt(searchPos).type = Block::AIR;
 			return true;
 		}
-
 	}
 
-	std::cout << "gave up" << std::endl;
+	return false; // could not find a destroyable block
+}
 
-	return false;
+bool World::placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const Block::BlockType type, const float maxReach)
+{
+	glm::vec3 searchPos = startingPos;
+
+	while (glm::distance(searchPos, startingPos) < maxReach)
+	{
+		searchPos += front;
+
+		if (getBlockAt(searchPos).type != Block::AIR)
+		{
+			while (getBlockAt(searchPos).type != Block::AIR) // traverse back until there is an air block to place on
+			{
+				searchPos -= front;
+			}
+			getBlockAt(searchPos).type = type;
+			return true;
+		}
+	}
+
+	return false; // could not place block
 }
 
 int World::getChunkIndex(const glm::vec3& pos)

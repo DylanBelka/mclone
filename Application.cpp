@@ -143,6 +143,19 @@ void Application::handleEvents()
 
 				break;
 			}
+			case SDL_BUTTON_RIGHT:
+			{
+				std::cout << "right button pressed\n";
+				std::cout << "Camera front: " << glm::to_string(cam.getFront()) << std::endl;
+
+				if (world.placeBlockAt(cam.getPos(), cam.getFront(), Block::GRASS))
+				{
+					std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
+					world.updateChunk(world.getChunkIndex(cam.getPos()));
+				}
+
+				break;
+			}
 			}
 
 			break;

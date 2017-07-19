@@ -26,8 +26,8 @@ public:
 	void generateWorldNoThread(int numChunks); // if the system only has one thread for some reason or std::thread::hardware_concurrency() is poorly defined
 
 	Block& getBlockAt(const glm::vec3& pos);
-	bool destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front); // returns true if the block could be destroyed
-	
+	bool destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach = 4.0); // returns true if the block could be destroyed
+	bool placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const Block::BlockType type, const float maxReach = 4.0); // returns true if the block could be placed
 
 	int getChunkIndex(const glm::vec3& pos);
 	void updateChunk(int cid) { chunks[cid].buildModel(); }
@@ -35,8 +35,6 @@ public:
 	unsigned int getNumChunks() { return numChunks; }
 
 private:
-	Block& getBlockReach(const glm::vec3& startingPos, const glm::vec3& front);
-
 	std::vector<Chunk> chunks;
 
 	unsigned int numRows;
