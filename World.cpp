@@ -5,6 +5,29 @@ World::World()
 
 }
 
+int World::getChunkIndex(const glm::vec3& pos)
+{
+	glm::ivec2 chunkPosxz(pos.x / chunkWidth, pos.z / chunkDepth);
+
+	//std::cout << "pos: " << glm::to_string(pos) << std::endl;
+	//std::cout << "chunkposxz: " << glm::to_string(chunkPosxz) << std::endl;
+	//std::cout << "chunk coord: " << chunkPosxz.y * numRows + chunkPosxz.x << std::endl;
+	//system("pause");
+
+	int index = chunkPosxz.y * numRows + chunkPosxz.x;
+	//std::cout << "unmodified cindex: " << index << "\n";
+	//if (index < 0)
+	//{
+	//	index = -index * 2 - 1;
+	//}
+	//else
+	//{
+	//	index = index * 2;
+	//}
+	//std::cout << "cindex: " << index << "\n";
+	return index;
+}
+
 Block& World::getBlockAt(const glm::vec3& pos)
 {
 	Chunk* thisChunk = &chunks[getChunkIndex(pos)];
@@ -13,7 +36,6 @@ Block& World::getBlockAt(const glm::vec3& pos)
 
 	return thisChunk->getBlockAt(bpos);
 }
-
 
 bool World::destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach)
 {
@@ -53,13 +75,6 @@ bool World::placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, c
 	}
 
 	return false; // could not place block
-}
-
-int World::getChunkIndex(const glm::vec3& pos)
-{
-	glm::ivec2 chunkPosxz(glm::abs(pos.x / chunkWidth), glm::abs(pos.z / chunkDepth));
-
-	return chunkPosxz.y * numRows + chunkPosxz.x;
 }
 
 void World::generateWorld(int numChunks, int seed)
@@ -103,7 +118,8 @@ void World::generateWorld(int numChunks, int seed)
 
 	int x, z;
 	x = z = 0;
-	int px, pz; // perlin offset coords, really just chunk coords
+	float px, pz; // perlin offset coords, really just chunk coords
+	float py;
  	int pxstart;
 
 	//std::random_device r; // random_device for seeding the Mersenne Twister 19937 generator, slower than mt19937 but "more random"
@@ -115,12 +131,13 @@ void World::generateWorld(int numChunks, int seed)
 	// essentially acting as a "seed" for the perlin noise generator
 	px = distrInt(eng);
 	pz = distrInt(eng);
+	py = distrFloat(eng);
 	pxstart = px;
 	std::cout << "px: " << px << " pz: " << pz << std::endl;
 
 	std::vector<std::thread> threads(totalSysThreads); // one thread is the main thread
 
-	const float incMaxHeight = .003;
+	//const float incMaxHeight = .003;
 
 	for (int i = 0; i < numChunks; i += totalSysThreads)
 	{
@@ -140,14 +157,14 @@ void World::generateWorld(int numChunks, int seed)
 			//float noise = glm::perlin(glm::vec2(px * incMaxHeight, pz * incMaxHeight));
 			//int maxHeight = map(noise, -1.0, 1.0, 10.0, 250.0);
 
-			tempChunks[j].generateChunk(1, 15, glm::vec2(px, pz)); 
+			tempChunks[j].generateChunk(1, 15, glm::vec3(px, py, pz)); 
 			threads[j] = std::thread(&Chunk::buildModelThreaded, &tempChunks[j], &allFinalModels[j], &alluvs[j], &allBlockTypeIndices[j]);
 
 			px += chunkWidth;
 			if (px >= chunkWidth * numRows)
 			{
-				px = pxstart;
-				pz += 16;
+				//px = pxstart;
+				pz -= 16;
 			}
 		}
 
@@ -194,6 +211,7 @@ void World::generateWorldNoThread(int numChunks)
 
 	int x, z;
 	int px, pz;
+	float py;
 	x = z = 0;
 	px = pz = 0;
 
@@ -203,7 +221,7 @@ void World::generateWorldNoThread(int numChunks)
 	{
 		Chunk c;
 
-		c.generateChunk(1, 15, glm::vec2(px, pz));
+		c.generateChunk(1, 15, glm::vec3(px, pz, py));
 		px += chunkWidth;
 		if (px >= chunkWidth * numRows)
 		{
@@ -229,6 +247,40 @@ void World::generateWorldNoThread(int numChunks)
 
 	elapsed = duration<double>(endFrame - beginFrame);
 	std::cout << "done generating world, nonthreaded, took: " << elapsed.count() << std::endl;
+}
+
+void World::update(const glm::vec3& playerPos, const unsigned int chunkRenderDistance)
+{
+	for (int i = 0; i < numChunks; i++)
+	{
+		Chunk* chk = &chunks[i];
+		glm::vec2 chunkPos(chk->chunkPosxz);
+		if (glm::distance(chunkPos.x, playerPos.x) > sqrt(chunkRenderDistance) * chunkWidth) // check x
+		{
+			chk->generateChunk(1, 15, glm::vec3(0.0, 0.0, 0.0));
+			chk->buildModel();
+			float newX = chunkPos.x;
+			for (int j = 0; j < numRows; j++)
+			{
+				newX += chunkWidth;
+			}
+			chk->moveChunkWorldSpace(glm::vec2(newX, chunkPos.y));
+			std::cout << "x" << std::endl;
+		}
+		if (glm::distance(chunkPos.y, playerPos.z) > sqrt(chunkRenderDistance) * chunkDepth) // check z
+		{
+			chk->generateChunk(1, 15, glm::vec3(0.0, 0.0, 0.0));
+			chk->buildModel();
+			float newZ = chunkPos.y;
+			for (int j = 0; j < numRows; j++)
+			{
+				newZ += chunkDepth;
+			}
+			chk->moveChunkWorldSpace(glm::vec2(chunkPos.x, newZ));
+			std::cout << "z" << std::endl;
+
+		}
+	}
 }
 
 void World::draw(Shader& s)

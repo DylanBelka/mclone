@@ -9,6 +9,8 @@
 #include <chrono>
 #include <mutex>
 
+#include <glew.h>
+
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtx/string_cast.hpp>
@@ -45,7 +47,7 @@ public:
 	void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
 	void draw(Shader& s);
 
-	void generateChunk(const int minHeight, const int maxHeight, const glm::vec2& poff);
+	void generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff);
 
 protected:
 	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }
@@ -55,6 +57,8 @@ protected:
 	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
 
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
+
+	void deleteChunk();
 
 private:
 	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position

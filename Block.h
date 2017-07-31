@@ -35,7 +35,8 @@ public:
 	{
 		AIR,
 		GRASS,
-		DIRT,
+		DIRT = 3,
+		STONE
 	};
 
 	BlockType type;

@@ -15,21 +15,22 @@ enum direction
 class Camera
 {
 public:
+	friend class Player;
+
 	Camera();
 
 	void move(direction d);
 	void updateRot(double x, double y);
 
-	glm::mat4 lookAt();
+	const glm::mat4& lookAt();
 
 	const glm::vec3& getPos() { return pos; }
 	const glm::vec3& getFront() { return front; }
 
-private:
-
+protected:
 	void updateCameraVectors();
 
-	float speed = .5;
+	float speed = 1.3;
 
 	double lastX;
 	double lastY;

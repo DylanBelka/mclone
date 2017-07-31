@@ -31,8 +31,11 @@ public:
 
 	int getChunkIndex(const glm::vec3& pos);
 	void updateChunk(int cid) { chunks[cid].buildModel(); }
+	void deleteChunk(int cid) { chunks[cid].deleteChunk(); }
 
 	unsigned int getNumChunks() { return numChunks; }
+
+	void update(const glm::vec3& playerPos, const unsigned int chunkRenderDistance);
 
 private:
 	std::vector<Chunk> chunks;

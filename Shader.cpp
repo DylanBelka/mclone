@@ -8,7 +8,10 @@ Shader::Shader(std::string vertShaderPath, std::string fragShaderPath)
 	unsigned int vertShader = compileShaderFromSrc(vertShaderSrc, GL_VERTEX_SHADER);
 	unsigned int fragShader = compileShaderFromSrc(fragShaderSrc, GL_FRAGMENT_SHADER);
 
-	ID = glCreateProgram();
+	if (ID == -1)
+	{
+		ID = glCreateProgram();
+	}
 	glAttachShader(ID, vertShader);
 	glAttachObjectARB(ID, fragShader);
 	glLinkProgram(ID);
@@ -78,4 +81,15 @@ unsigned int Shader::compileShaderFromSrc(std::string shaderSrc, unsigned int sh
 		std::cout << "Error compiling shader type: " << shaderType << "\n" << infoLog << std::endl;
 	}
 	return shaderID;
+}
+
+void checkGlErr(int line)
+{
+	GLenum err = glGetError();
+
+	if (err != GL_NO_ERROR)
+	{
+		std::cout << "OpenGL error code: " << err << " on line " << line << std::endl;
+		system("pause");
+	}
 }

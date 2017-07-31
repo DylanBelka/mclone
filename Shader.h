@@ -25,10 +25,12 @@ public:
 	const GLuint getUniformLocation(const std::string& name) const { return glGetUniformLocation(ID, name.c_str()); }
 
 private:
-	unsigned int ID;
+	unsigned int ID = -1;
 
 	std::string loadShaderFromFile(std::string shaderFilePath);
 	unsigned int compileShaderFromSrc(std::string shaderSrc, unsigned int shaderType);
 };
+
+void checkGlErr(int line);
 
 #endif // SHADER_H

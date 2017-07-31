@@ -2,7 +2,7 @@
 
 Camera::Camera()
 {
-	pos = glm::vec3(0.0, 0.0, 3.0);
+	pos = glm::vec3(0.0, 0.0, 0.0);
 	front = glm::vec3(0.0, 0.0, -1.0);
 	up = glm::vec3(0.0, 1.0, 0.0);
 	worldUp = up;
@@ -30,7 +30,7 @@ void Camera::move(direction d)
 	}
 }
 
-glm::mat4 Camera::lookAt()
+const glm::mat4& Camera::lookAt()
 {
 	return glm::lookAt(pos, pos + front, up);
 }

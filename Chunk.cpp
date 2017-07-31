@@ -132,13 +132,15 @@ Chunk::Chunk() :
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	for (int i = 0; i < NUM_VBOS; i++)
-	{
-		glGenBuffers(1, &VBOS[i]);
-	}
+	glGenBuffers(NUM_VBOS, VBOS);
 }
 
 Chunk::~Chunk()
+{
+
+}
+
+void Chunk::deleteChunk()
 {
 
 }
@@ -446,21 +448,21 @@ float map(float x, float xmin, float xmax, float dmin, float dmax)
 	return (x - xmin) / (xmax - xmin) * (dmax - dmin) + dmin;
 }
 
-void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec2& poff)
+void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff)
 {
 	const float inc = .03;
 
 	// begin the perlin offset at the coordinate of the chunk right next to it
-	glm::vec2 perlinOffset(poff.x * inc, poff.y * inc);
+	glm::vec3 perlinOffset(poff.x * inc, poff.y * inc, poff.z * inc);
 
-	float zResetVal = perlinOffset.y;
+	float zResetVal = perlinOffset.z;
 
 	for (int x = 0; x < chunkWidth; x++)
 	{
-		perlinOffset.y = zResetVal;
+		perlinOffset.z = zResetVal;
 		for (int z = 0; z < chunkDepth; z++)
 		{
-			float noise = glm::perlin(perlinOffset);
+			float noise = glm::perlin(glm::vec2(perlinOffset.x, perlinOffset.z));
 
 			int height = map(noise, -1.0, 1.0, minHeight, maxHeight);
 
@@ -470,12 +472,16 @@ void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::v
 				{
 					blocksxyz[x][y][z].type = Block::GRASS;
 				}
+				else if (y < height * (3.0 / 4.0))
+				{
+					blocksxyz[x][y][z].type = Block::STONE;
+				}
 				else
 				{
 					blocksxyz[x][y][z].type = Block::DIRT;
 				}
 			}
-			perlinOffset.y += inc;
+			perlinOffset.z += inc;
 		}
 		perlinOffset.x += inc;
 	}

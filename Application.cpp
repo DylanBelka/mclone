@@ -1,6 +1,6 @@
 #include "Application.h"
 
-Application::Application(int w, int h) 
+Application::Application(int w, int h)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
@@ -31,8 +31,14 @@ Application::Application(int w, int h)
 		std::cout << "Glew failed to initialize" << std::endl;
 	}
 
-	shader = Shader("vertex.glsl", "fragment.glsl");
+	blockShader = Shader("blockVertex.glsl", "blockFragment.glsl");
+	//hudShader = Shader("hudVertex.glsl", "hudFragment.glsl");
 
+	blockTextureAtlas = Texture("textures.png");
+	hudtex = Texture("crosshair.png");
+
+	//hud.initialize();
+	
 	glViewport(0, 0, w, h);
 
 	glClearColor(.5, .67, 1, 1.0);
@@ -67,22 +73,22 @@ void Application::handleEvents()
 			}
 			case SDLK_w:
 			{
-				cam.move(direction::FORWARD);
+				player.move(direction::FORWARD);
 				break;
 			}
 			case SDLK_s:
 			{
-				cam.move(direction::BACKWARD);
+				player.move(direction::BACKWARD);
 				break;
 			}
 			case SDLK_a:
 			{
-				cam.move(direction::LEFT);
+				player.move(direction::LEFT);
 				break;
 			}
 			case SDLK_d:
 			{
-				cam.move(direction::RIGHT);
+				player.move(direction::RIGHT);
 				break;
 			}
 			case SDLK_RETURN: // enter key
@@ -107,7 +113,7 @@ void Application::handleEvents()
 			}
 			case SDLK_SPACE: // spacebar
 			{
-				std::cout << "Camera pos: " << glm::to_string(cam.getPos()) << std::endl;
+				std::cout << "Camera pos: " << glm::to_string(player.getPos()) << std::endl;
 				break;
 			}
 			case SDLK_r:
@@ -120,7 +126,7 @@ void Application::handleEvents()
 			}
 			case SDLK_e:
 			{
-				//shader = Shader("vertex.glsl", "fragment.glsl");
+				world.deleteChunk(0);
 				break;
 			}
 			}
@@ -132,26 +138,18 @@ void Application::handleEvents()
 			{
 			case SDL_BUTTON_LEFT:
 			{
-				std::cout << "left button pressed\n";
-				std::cout << "Camera front: " << glm::to_string(cam.getFront()) << std::endl;
-
-				if (world.destroyBlockAt(cam.getPos(), cam.getFront()))
+				if (world.destroyBlockAt(player.getPos(), player.getFront()))
 				{
-					std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
-					world.updateChunk(world.getChunkIndex(cam.getPos()));
+					world.updateChunk(world.getChunkIndex(player.getPos()));
 				}
 
 				break;
 			}
 			case SDL_BUTTON_RIGHT:
 			{
-				std::cout << "right button pressed\n";
-				std::cout << "Camera front: " << glm::to_string(cam.getFront()) << std::endl;
-
-				if (world.placeBlockAt(cam.getPos(), cam.getFront(), Block::GRASS))
+				if (world.placeBlockAt(player.getPos(), player.getFront(), Block::GRASS))
 				{
-					std::cout << "Updating chunk: " << world.getChunkIndex(cam.getPos()) << std::endl;
-					world.updateChunk(world.getChunkIndex(cam.getPos()));
+					world.updateChunk(world.getChunkIndex(player.getPos()));
 				}
 
 				break;
@@ -162,7 +160,7 @@ void Application::handleEvents()
 		}
 		case SDL_MOUSEMOTION:
 		{
-			cam.updateRot(e.motion.x, e.motion.y);
+			player.updateRot(e.motion.x, e.motion.y);
 			break;
 		}
 		}
@@ -171,33 +169,6 @@ void Application::handleEvents()
 
 void Application::run()
 {
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// load image, create texture and generate mipmaps
-	int w, h, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("textures.png", &w, &h, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		//glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-
-	stbi_image_free(data);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
 	using namespace std::chrono;
 
 	steady_clock::time_point beginFrame = steady_clock::now();
@@ -211,28 +182,41 @@ void Application::run()
 	glm::mat4 view;
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
+	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, viewDistance);
+	std::cout << "view distance: " << viewDistance << std::endl;
+	std::cout << "chunk view distance: " << chunkRenderDistance << std::endl;
 
-	const unsigned int numChunks = 1024;
+	const unsigned int numChunks = 4;
 	
-	world.generateWorld(numChunks, time(NULL));
+	world.generateWorld(chunkRenderDistance, time(NULL));
+
+	//player.moveTo(glm::vec3(sqrt(numChunks) * chunkWidth / 2.0, 20.0, sqrt(numChunks) * chunkDepth / 2.0));
 
 	while (running) 
 	{
 		beginFrame = steady_clock::now();
 
 		handleEvents(); // handle events
-		view = cam.lookAt(); // update the camera
-
-		shader.use(); // setup shaders for rendering
+		view = player.lookAt(); // update the camera
+		world.update(player.getPos(), chunkRenderDistance);
 
 		display->clear();
 
+		// draw blocks
+		blockTextureAtlas.bind();
+		blockShader.use(); // setup shaders for rendering
+
 		// all blocks use same view and projection data
-		shader.setUniformMat4("view", view);
-		shader.setUniformMat4("projection", projection);
+		blockShader.setUniformMat4("view", view);
+		blockShader.setUniformMat4("projection", projection);
 		
-		world.draw(shader);
+		world.draw(blockShader);
+
+		// draw hud
+		//hudtex.bind();
+		//hudShader.use();
+
+		//hud.draw();
 
 		display->display();
 

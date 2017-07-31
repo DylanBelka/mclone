@@ -19,6 +19,9 @@
 #include "Block.h"
 #include "Chunk.h"
 #include "World.h"
+#include "HUD.h"
+#include "Texture.h"
+#include "Player.h"
 
 class Application
 {
@@ -29,13 +32,22 @@ public:
 
 	void run();
 
+	const unsigned int chunkRenderDistance = 4; // number of chunks to render
+	const float viewDistance = (float)sqrt(chunkRenderDistance) * (float)chunkWidth;//32.0 * (float)chunkWidth;
+
 private:
 	void handleEvents();
 
 	Display *display;
 	World world;
-	Camera cam;
-	Shader shader;
+	Player player;
+	HUD hud;
+
+	Texture blockTextureAtlas;
+	Texture hudtex;
+
+	Shader blockShader;
+	Shader hudShader;
 
 	SDL_Event e;
 	bool running;

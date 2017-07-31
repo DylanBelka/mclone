@@ -27,5 +27,4 @@ private:
 
 void handleSDLErr(std::string msg);
 
-
 #endif // DISPLAY_H
