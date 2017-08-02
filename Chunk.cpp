@@ -133,6 +133,11 @@ Chunk::Chunk() :
 	glBindVertexArray(vao);
 
 	glGenBuffers(NUM_VBOS, VBOS);
+
+	static int chunksGen = 0;
+
+	std::cout << "constructing new chunk..." << chunksGen << std::endl;
+	chunksGen++;
 }
 
 Chunk::~Chunk()
@@ -443,11 +448,6 @@ void Chunk::moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where)
 	blocksxyz[where.x][where.y ][where.z] = b;
 }
 
-float map(float x, float xmin, float xmax, float dmin, float dmax)
-{
-	return (x - xmin) / (xmax - xmin) * (dmax - dmin) + dmin;
-}
-
 void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff)
 {
 	const float inc = .03;
@@ -464,7 +464,7 @@ void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::v
 		{
 			float noise = glm::perlin(glm::vec2(perlinOffset.x, perlinOffset.z));
 
-			int height = map(noise, -1.0, 1.0, minHeight, maxHeight);
+			int height = math::map(noise, -1.0, 1.0, minHeight, maxHeight);
 
 			for (int y = 0; y < height; y++)
 			{

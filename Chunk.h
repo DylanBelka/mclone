@@ -18,14 +18,13 @@
 
 #include "Block.h"
 #include "Shader.h"
+#include "math.h"
 
 const unsigned int chunkWidth = 16;
 const unsigned int chunkHeight = 256;
 const unsigned int chunkDepth = 16;
 
 const unsigned int chunkSize = chunkWidth * chunkDepth * chunkHeight;
-
-float map(float x, float xmin, float xmax, float dmin, float dmax);
 
 /****
 
@@ -59,6 +58,10 @@ protected:
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
 
 	void deleteChunk();
+
+	const std::string to_string() { return "Chunk: " + std::to_string(vao) + " Coords: " + glm::to_string(chunkPosxz); }
+
+	bool isInPlayerView = true;
 
 private:
 	glm::vec2 chunkPosxz; // all chunks are shifted by their "world" position
