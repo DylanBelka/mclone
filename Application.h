@@ -32,8 +32,8 @@ public:
 
 	void run();
 
-	const unsigned int chunkRenderDistance = 4; // number of chunks to render
-	const float viewDistance = (float)sqrt(chunkRenderDistance) * (float)chunkWidth;//32.0 * (float)chunkWidth;
+	const unsigned int renderDistance = 1; // number of chunks to render in any direction
+	const float viewDistance = (float)sqrt(renderDistance) * (float)chunkWidth;//32.0 * (float)chunkWidth;
 
 private:
 	void handleEvents();

@@ -5,32 +5,12 @@ World::World()
 
 }
 
-int World::getChunkIndex(const glm::vec3& pos)
-{
-	glm::ivec2 chunkPosxz(pos.x / chunkWidth, pos.z / chunkDepth);
-
-	//std::cout << "pos: " << glm::to_string(pos) << std::endl;
-	//std::cout << "chunkposxz: " << glm::to_string(chunkPosxz) << std::endl;
-	//std::cout << "chunk coord: " << chunkPosxz.y * numRows + chunkPosxz.x << std::endl;
-	//system("pause");
-
-	int index = chunkPosxz.y * numRows + chunkPosxz.x;
-	//std::cout << "unmodified cindex: " << index << "\n";
-	//if (index < 0)
-	//{
-	//	index = -index * 2 - 1;
-	//}
-	//else
-	//{
-	//	index = index * 2;
-	//}
-	//std::cout << "cindex: " << index << "\n";
-	return index;
-}
-
 Block& World::getBlockAt(const glm::vec3& pos)
 {
-	Chunk* thisChunk = &chunks[getChunkIndex(pos)];
+	//const glm::ivec2 chunkCoord(pos.x / chunkWidth, pos.z / chunkDepth);
+
+	Chunk* thisChunk = &hchunks[worldCoordToChunkCoord(pos)];
+	std::cout << "chunk coord: " << glm::to_string(worldCoordToChunkCoord(pos)) << std::endl;
 
 	glm::ivec3 bpos((int)pos.x % chunkWidth, (int)pos.y % chunkHeight, (int)pos.z % chunkDepth);
 
@@ -77,6 +57,7 @@ bool World::placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, c
 	return false; // could not place block
 }
 
+/*
 void World::generateWorld(int numChunks, int seed)
 {
 	numRows = sqrt(numChunks); // space chunks out in a grid of sqrt(numChunks) x sqrt(numChunks)
@@ -157,14 +138,14 @@ void World::generateWorld(int numChunks, int seed)
 			//float noise = glm::perlin(glm::vec2(px * incMaxHeight, pz * incMaxHeight));
 			//int maxHeight = map(noise, -1.0, 1.0, 10.0, 250.0);
 
-			tempChunks[j].generateChunk(1, 15, glm::vec3(px, py, pz)); 
+			tempChunks[j].generateChunk(1, 15, glm::vec3(0.0, 0.0, 0.0)); // ### CHANGE THIS BACK ####################################################################################
 			threads[j] = std::thread(&Chunk::buildModelThreaded, &tempChunks[j], &allFinalModels[j], &alluvs[j], &allBlockTypeIndices[j]);
 
 			px += chunkWidth;
 			if (px >= chunkWidth * numRows)
 			{
-				//px = pxstart;
-				pz -= 16;
+				px = pxstart;
+				pz += 16;
 			}
 		}
 
@@ -184,7 +165,9 @@ void World::generateWorld(int numChunks, int seed)
 				z += 16;
 			}
 
-			chunks.push_back(tempChunks[j]);
+			//chunks.push_back(tempChunks[j]);
+			hchunks[tempChunks[j].chunkPosxz] = tempChunks[j];
+			std::cout << hchunks[tempChunks[j].chunkPosxz].to_string() << std::endl;
 		}
 	}
 #ifdef DEBUG
@@ -233,7 +216,7 @@ void World::generateWorldNoThread(int numChunks)
 		c.moveChunkWorldSpace(glm::vec2(x, z));
 
 		//std::cout << "pushing chunk: " << chunks.size() << std::endl;
-		chunks.push_back(c);
+		//chunks.push_back(c);
 
 		x += chunkWidth;
 		if (x >= chunkWidth * numRows)
@@ -249,44 +232,147 @@ void World::generateWorldNoThread(int numChunks)
 	std::cout << "done generating world, nonthreaded, took: " << elapsed.count() << std::endl;
 }
 
-void World::update(const glm::vec3& playerPos, const unsigned int chunkRenderDistance)
-{
-	for (int i = 0; i < numChunks; i++)
-	{
-		Chunk* chk = &chunks[i];
-		glm::vec2 chunkPos(chk->chunkPosxz);
-		if (glm::distance(chunkPos.x, playerPos.x) > sqrt(chunkRenderDistance) * chunkWidth) // check x
-		{
-			chk->generateChunk(1, 15, glm::vec3(0.0, 0.0, 0.0));
-			chk->buildModel();
-			float newX = chunkPos.x;
-			for (int j = 0; j < numRows; j++)
-			{
-				newX += chunkWidth;
-			}
-			chk->moveChunkWorldSpace(glm::vec2(newX, chunkPos.y));
-			std::cout << "x" << std::endl;
-		}
-		if (glm::distance(chunkPos.y, playerPos.z) > sqrt(chunkRenderDistance) * chunkDepth) // check z
-		{
-			chk->generateChunk(1, 15, glm::vec3(0.0, 0.0, 0.0));
-			chk->buildModel();
-			float newZ = chunkPos.y;
-			for (int j = 0; j < numRows; j++)
-			{
-				newZ += chunkDepth;
-			}
-			chk->moveChunkWorldSpace(glm::vec2(chunkPos.x, newZ));
-			std::cout << "z" << std::endl;
+*/
 
+bool isValidChunkPos(glm::vec2 chunkPos)
+{
+	glm::ivec2 cPos(chunkPos);
+	return cPos.x % 16 == 0 && cPos.y % 16 == 0;
+}
+
+void World::update(const glm::vec3& playerPos, const unsigned int renderDistance)
+{
+	const float maxChunkDistance = (renderDistance * chunkWidth) * (renderDistance * chunkWidth);
+
+	for (auto i = hchunks.begin(); i != hchunks.end(); i++)
+	{
+		Chunk* chk = &i->second;
+		glm::vec2 chunkPos(chk->chunkPosxz);
+		glm::vec2 playerPosXZ(playerPos.x, playerPos.z);
+
+		glm::vec2 chunkPosCentered(chunkPos.x + chunkWidth / 2.f, chunkPos.y + chunkDepth / 2.f);
+
+		float dst = math::sqrdDistPtToRect(playerPosXZ, chunkPosCentered, chunkWidth, chunkDepth);
+
+		if (dst <= maxChunkDistance) // within render distance
+		{
+			if (!chk->isInPlayerView) // chunk has just become within view
+			{
+				chk->isInPlayerView = true; // make it viewable
+			}
+		}
+		else // not within render distance
+		{
+			if (chk->isInPlayerView) // chunk has just become not within view
+			{
+				chk->isInPlayerView = false; // make it unviewable
+			}
+		}
+	}
+
+	// positive, positive
+	glm::vec2 playerPosChunkCoord(worldCoordToChunkCoord(playerPos));
+
+	std::cout << "playerPosChunkCoord: " << glm::to_string(playerPosChunkCoord) << std::endl;
+
+	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((renderDistance + 1) * 16); x += 16)
+	{
+		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
+		{
+			glm::vec2 newChunkCoord(x, y);
+			if (true || isValidChunkPos(newChunkCoord))
+			{
+				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
+				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
+				{
+					if (hchunks.find(newChunkCoord) == hchunks.end()) // does not exist
+					{
+						createChunk(newChunkCoord, glm::vec3(newChunkCoord.x, 0.0, newChunkCoord.y));
+					}
+				}
+			}
+		}
+	}
+
+	// positive, negative
+	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((renderDistance + 1) * 16); x += 16)
+	{
+		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
+		{
+			glm::vec2 newChunkCoord(x, y);
+			if (true || isValidChunkPos(newChunkCoord))
+			{
+				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
+				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
+				{
+					if (hchunks.find(newChunkCoord) == hchunks.end()) // does not exist
+					{
+						createChunk(newChunkCoord, glm::vec3(newChunkCoord.x, 0.0, newChunkCoord.y));
+					}
+				}
+			}
+		}
+	}
+
+	// negative, positive
+	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((renderDistance + 1) * 16); x -= 16)
+	{
+		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
+		{
+			glm::vec2 newChunkCoord(x, y);
+			if (true || isValidChunkPos(newChunkCoord))
+			{
+				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
+				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
+				{
+					if (hchunks.find(newChunkCoord) == hchunks.end()) // does not exist
+					{
+						createChunk(newChunkCoord, glm::vec3(newChunkCoord.x, 0.0, newChunkCoord.y));
+					}
+				}
+			}
+		}
+	}
+
+	// negative, negative
+	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((renderDistance + 1) * 16); x -= 16)
+	{
+		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
+		{
+			glm::vec2 newChunkCoord(x, y);
+			if (true || isValidChunkPos(newChunkCoord))
+			{
+				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
+				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
+				{
+					if (hchunks.find(newChunkCoord) == hchunks.end()) // does not exist
+					{
+						createChunk(newChunkCoord, glm::vec3(newChunkCoord.x, 0.0, newChunkCoord.y));
+					}
+				}
+			}
 		}
 	}
 }
 
+void World::createChunk(glm::vec2 chunkPos, glm::vec3 perlinCoords)
+{
+	Chunk tmp;
+	tmp.generateChunk(1, 15, perlinCoords);
+	tmp.buildModel();
+	tmp.moveChunkWorldSpace(chunkPos);
+
+	hchunks[chunkPos] = tmp;
+}
+
 void World::draw(Shader& s)
 {
-	for (Chunk& c : chunks)
+	for (auto i = hchunks.begin(); i != hchunks.end(); i++)
 	{
-		c.draw(s);
+		Chunk* chk = &i->second;
+		if (chk->isInPlayerView) // only draw chunks within render distance
+		{
+			chk->draw(s);
+		}
 	}
 }

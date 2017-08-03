@@ -74,21 +74,25 @@ void Application::handleEvents()
 			case SDLK_w:
 			{
 				player.move(direction::FORWARD);
+				world.update(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_s:
 			{
 				player.move(direction::BACKWARD);
+				world.update(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_a:
 			{
 				player.move(direction::LEFT);
+				world.update(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_d:
 			{
 				player.move(direction::RIGHT);
+				world.update(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_RETURN: // enter key
@@ -118,15 +122,15 @@ void Application::handleEvents()
 			}
 			case SDLK_r:
 			{
-				for (int i = 0; i < world.getNumChunks(); i++)
-				{
-					world.updateChunk(i);
-				}
+				//for (int i = 0; i < world.getNumChunks(); i++)
+				//{
+				//	world.updateChunk(i);
+				//}
 				break;
 			}
 			case SDLK_e:
 			{
-				world.deleteChunk(0);
+				//world.deleteChunk(0);
 				break;
 			}
 			}
@@ -140,7 +144,8 @@ void Application::handleEvents()
 			{
 				if (world.destroyBlockAt(player.getPos(), player.getFront()))
 				{
-					world.updateChunk(world.getChunkIndex(player.getPos()));
+					//world.updateChunk(world.getChunkIndex(player.getPos()));
+					world.updateChunk(player.getPos());
 				}
 
 				break;
@@ -149,7 +154,8 @@ void Application::handleEvents()
 			{
 				if (world.placeBlockAt(player.getPos(), player.getFront(), Block::GRASS))
 				{
-					world.updateChunk(world.getChunkIndex(player.getPos()));
+					//world.updateChunk(world.getChunkIndex(player.getPos()));
+					world.updateChunk(player.getPos());
 				}
 
 				break;
@@ -182,13 +188,14 @@ void Application::run()
 	glm::mat4 view;
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, viewDistance);
+	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
 	std::cout << "view distance: " << viewDistance << std::endl;
-	std::cout << "chunk view distance: " << chunkRenderDistance << std::endl;
+	std::cout << "render distance: " << renderDistance << std::endl;
 
-	const unsigned int numChunks = 4;
+	const unsigned int numChunks = 4 * renderDistance * renderDistance;
+	std::cout << "number of chunks rendering: " << numChunks << std::endl;
 	
-	world.generateWorld(chunkRenderDistance, time(NULL));
+	//world.generateWorld(numChunks, time(NULL));
 
 	//player.moveTo(glm::vec3(sqrt(numChunks) * chunkWidth / 2.0, 20.0, sqrt(numChunks) * chunkDepth / 2.0));
 
@@ -198,7 +205,6 @@ void Application::run()
 
 		handleEvents(); // handle events
 		view = player.lookAt(); // update the camera
-		world.update(player.getPos(), chunkRenderDistance);
 
 		display->clear();
 
