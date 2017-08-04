@@ -78,7 +78,7 @@ private:
 
 	unsigned int VBOS[NUM_VBOS];
 	unsigned int vao;
-	unsigned int modelLoc = -1;
+	static unsigned int modelLoc;
 
 	unsigned int numVerts;
 };

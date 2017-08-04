@@ -126,6 +126,8 @@ glm::vec3 normalizeCoord(glm::vec3 c)
 	return glm::vec3(x, y, z);
 }
 
+unsigned int Chunk::modelLoc = -1;
+
 Chunk::Chunk() :
 	blocksxyz(chunkWidth, std::vector<std::vector<Block>>(chunkHeight, std::vector<Block>(chunkDepth, Block()))) // creates a 16x256x16 3d vector of default blocks
 {
@@ -431,6 +433,7 @@ void Chunk::draw(Shader& s)
 	
 	if (modelLoc == -1)
 	{
+		std::cout << "initializing model location" << std::endl;
 		modelLoc = s.getUniformLocation("model");
 	}
 
