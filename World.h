@@ -17,6 +17,7 @@
 #include "Chunk.h"
 #include "Block.h"
 #include "math.h"
+#include "Player.h"
 
 class World
 {
@@ -25,18 +26,16 @@ public:
 
 	void draw(Shader& s);
 
-	//void generateWorld(int numChunks, int seed = 0); // numChunks should always be a perfect square
-	//void generateWorldNoThread(int numChunks); // if the system only has one thread for some reason or std::thread::hardware_concurrency() is poorly defined
+	void generateWorld(Player& player, int numChunks, int seed = 0); // numChunks should always be a perfect square
+	void generateWorldNoThread(int numChunks); // if the system only has one thread for some reason or std::thread::hardware_concurrency() is poorly defined
 
 	Block& getBlockAt(const glm::vec3& pos);
 	bool destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach = 4.0); // returns true if the block could be destroyed
 	bool placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const Block::BlockType type, const float maxReach = 4.0); // returns true if the block could be placed
 
 	void updateChunk(glm::vec2 chunkCoord) { hchunks[chunkCoord].buildModel(); }
-	void deleteChunk(glm::vec2 chunkCoord) { hchunks[chunkCoord].deleteChunk(); }
 
-	void updateChunk(glm::vec3 worldPos) { hchunks[worldCoordToChunkCoord(worldPos)].buildModel(); }
-	void deleteChunk(glm::vec3 worldPos) { hchunks[worldCoordToChunkCoord(worldPos)].deleteChunk(); }
+	void updateChunk(glm::vec3 worldPos);// { hchunks[worldCoordToChunkCoord(worldPos)].buildModel(); }
 
 	unsigned int getNumChunks() { return numChunks; }
 
