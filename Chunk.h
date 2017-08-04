@@ -56,7 +56,7 @@ protected:
 	void moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where);
 
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
-
+	
 	void deleteChunk();
 
 	const std::string to_string() { return "Chunk: " + std::to_string(vao) + " Coords: " + glm::to_string(chunkPosxz); }

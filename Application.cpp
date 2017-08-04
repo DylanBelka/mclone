@@ -95,6 +95,11 @@ void Application::handleEvents()
 				world.update(player.getPos(), renderDistance);
 				break;
 			}
+			case SDLK_r:
+			{
+				world.getBlockAt(player.getPos());
+				break;
+			}
 			case SDLK_RETURN: // enter key
 			{
 				static int glpMode = GL_FILL;
@@ -118,19 +123,6 @@ void Application::handleEvents()
 			case SDLK_SPACE: // spacebar
 			{
 				std::cout << "Camera pos: " << glm::to_string(player.getPos()) << std::endl;
-				break;
-			}
-			case SDLK_r:
-			{
-				//for (int i = 0; i < world.getNumChunks(); i++)
-				//{
-				//	world.updateChunk(i);
-				//}
-				break;
-			}
-			case SDLK_e:
-			{
-				//world.deleteChunk(0);
 				break;
 			}
 			}
@@ -189,13 +181,17 @@ void Application::run()
 
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(90.f), (float)display->width / (float)display->height, .1f, 1000.f);
+
+	unsigned int viewUniformLoc = blockShader.getUniformLocation("view");
+	unsigned int projUniformLoc = blockShader.getUniformLocation("projection");
+
 	std::cout << "view distance: " << viewDistance << std::endl;
 	std::cout << "render distance: " << renderDistance << std::endl;
 
 	const unsigned int numChunks = 4 * renderDistance * renderDistance;
 	std::cout << "number of chunks rendering: " << numChunks << std::endl;
-	
-	//world.generateWorld(numChunks, time(NULL));
+
+	//world.generateWorld(player, numChunks, time(NULL));
 
 	//player.moveTo(glm::vec3(sqrt(numChunks) * chunkWidth / 2.0, 20.0, sqrt(numChunks) * chunkDepth / 2.0));
 
@@ -213,8 +209,8 @@ void Application::run()
 		blockShader.use(); // setup shaders for rendering
 
 		// all blocks use same view and projection data
-		blockShader.setUniformMat4("view", view);
-		blockShader.setUniformMat4("projection", projection);
+		blockShader.setUniformMat4(viewUniformLoc, view);
+		blockShader.setUniformMat4(projUniformLoc, projection);
 		
 		world.draw(blockShader);
 
