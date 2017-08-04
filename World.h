@@ -27,17 +27,13 @@ public:
 	void draw(Shader& s);
 
 	void generateWorld(Player& player, int numChunks, int seed = 0); // numChunks should always be a perfect square
-	void generateWorldNoThread(int numChunks); // if the system only has one thread for some reason or std::thread::hardware_concurrency() is poorly defined
 
 	Block& getBlockAt(const glm::vec3& pos);
 	bool destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach = 4.0); // returns true if the block could be destroyed
 	bool placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const Block::BlockType type, const float maxReach = 4.0); // returns true if the block could be placed
 
 	void updateChunk(glm::vec2 chunkCoord) { hchunks[chunkCoord].buildModel(); }
-
-	void updateChunk(glm::vec3 worldPos);// { hchunks[worldCoordToChunkCoord(worldPos)].buildModel(); }
-
-	unsigned int getNumChunks() { return numChunks; }
+	void updateChunk(glm::vec3 worldPos);
 
 	void update(const glm::vec3& playerPos, const unsigned int renderDistance);
 
@@ -47,9 +43,6 @@ private:
 
 private:
 	std::unordered_map<glm::vec2, Chunk> hchunks;
-
-	unsigned int numRows;
-	unsigned int numChunks;
 };
 
 #endif // WORLD_H

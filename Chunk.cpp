@@ -147,11 +147,6 @@ Chunk::~Chunk()
 
 }
 
-void Chunk::deleteChunk()
-{
-
-}
-
 std::vector<glm::vec3> getFace(Face::FaceIndex index)
 {
 	std::vector<glm::vec3> face;
@@ -296,107 +291,6 @@ void Chunk::buildModel()
 	numVerts = finalModel.size();
 
 	sendModelDataToGL(finalModel, uvs, blockTypeIndices);
-}
-
-void Chunk::buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr)
-{
-	//#define DEBUG
-
-#ifdef DEBUG
-	using namespace std::chrono;
-
-	steady_clock::time_point beginFrame = steady_clock::now();
-	steady_clock::time_point endFrame = steady_clock::now();
-
-	duration<double> elapsed = duration<double>(endFrame - beginFrame);
-
-	beginFrame = steady_clock::now();
-
-#endif // DEBUG
-
-	std::vector<glm::vec3> finalModel;
-	std::vector<glm::vec2> uvs;
-	std::vector<int> blockTypeIndices;
-
-	for (int y = 0; y < chunkHeight; y++)
-	{
-		for (int z = 0; z < chunkDepth; z++)
-		{
-			for (int x = 0; x < chunkDepth; x++)
-			{
-				Block b = blocksxyz[x][y][z];
-				if (b.type != Block::AIR) // skip this block if it is just air
-				{
-					glm::ivec3 bPos(x, y, z);
-
-					auto pFace = [&b, &finalModel, &uvs, &bPos, &blockTypeIndices](Face::FaceIndex findex) // wew a lambda function
-					{
-						std::vector<glm::vec3> face = getFace(findex);
-						std::vector<glm::vec2> faceUV = getFaceUV(findex);
-						for (glm::vec3& vert : face) // push each vertex of the face after normalizing it
-						{
-							vert = normalizeCoord(vert + glm::vec3(bPos)); // shift the vertex over by the position of the block
-							finalModel.push_back(vert);
-
-							blockTypeIndices.push_back(b.type + b.uniqueFaceIndexOffset(findex));
-						}
-						for (glm::vec2& uv : faceUV)
-						{
-							uvs.push_back(uv);
-						}
-					};
-
-					// check each direction around the current block and add a face in that direction if there is nothing there, ie air
-
-					// above
-					if (bPos.y >= chunkHeight - 1 || (bPos.y + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y + 1][bPos.z].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::TOP);
-					}
-					// below
-					if (bPos.y <= 0 || (y - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y - 1][bPos.z].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::BOTTOM);
-					}
-					// left
-					if (bPos.x <= 0 || (bPos.x - 1 < chunkHeight && blocksxyz[bPos.x - 1][bPos.y][bPos.z].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::LEFT);
-					}
-					// right
-					if (bPos.x == chunkWidth - 1 || (bPos.x + 1 < chunkHeight && blocksxyz[bPos.x + 1][bPos.y][bPos.z].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::RIGHT);
-					}
-					// back 
-					if (bPos.z >= chunkDepth - 1 || (bPos.z + 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z + 1].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::BACK);
-					}
-					// front
-					if (bPos.z <= 0 || (bPos.z - 1 < chunkHeight && blocksxyz[bPos.x][bPos.y][bPos.z - 1].type == Block::AIR))
-					{
-						pFace(Face::FaceIndex::FRONT);
-					}
-				}
-			}
-		}
-	}
-
-#ifdef DEBUG
-
-	endFrame = steady_clock::now();
-
-	elapsed = duration<double>(endFrame - beginFrame);
-	std::cout << "done took: " << elapsed.count() << std::endl;
-
-#endif // DEBUG
-
-	numVerts = finalModel.size();
-
-	*modptr = finalModel;
-	*uvptr = uvs;
-	*btiptr = blockTypeIndices;
 }
 
 void Chunk::sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices)

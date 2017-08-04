@@ -43,7 +43,7 @@ public:
 	~Chunk();
 
 	void buildModel();
-	void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
+	//void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
 	void draw(Shader& s);
 
 	void generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff);
@@ -57,8 +57,6 @@ protected:
 
 	void sendModelDataToGL(const std::vector<glm::vec3>& model, const std::vector<glm::vec2>& uvs, const std::vector<int>& blockTypeIndices);
 	
-	void deleteChunk();
-
 	const std::string to_string() { return "Chunk: " + std::to_string(vao) + " Coords: " + glm::to_string(chunkPosxz); }
 
 	bool isInPlayerView = true;
