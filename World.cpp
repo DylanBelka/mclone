@@ -21,12 +21,7 @@ Block& World::getBlockAt(const glm::vec3& pos)
 
 	thisChunk = &hchunks[worldCoordToChunkCoord(chunkPos)];
 
-	std::cout << "playerCoord: " << glm::to_string(pos) << std::endl;
-	std::cout << "chunk is: " << thisChunk->to_string() << std::endl;
-	std::cout << "chunk coord: " << glm::to_string(chunkPos) << std::endl;
-
 	glm::ivec3 bpos(glm::abs((int)chunkPos.x % chunkWidth), glm::abs((int)chunkPos.y % chunkHeight), glm::abs((int)chunkPos.z % chunkDepth));
-	std::cout << "block coord: " << glm::to_string(bpos) << std::endl;
 	return thisChunk->getBlockAt(bpos);
 }
 
