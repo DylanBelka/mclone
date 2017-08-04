@@ -270,17 +270,15 @@ void World::update(const glm::vec3& playerPos, const unsigned int renderDistance
 		}
 	}
 
+	glm::vec2 playerPosChunkCoord(worldCoordToChunkCoord(playerPos)); // coordinates of chunk player is in
+	
 	// positive, positive
-	glm::vec2 playerPosChunkCoord(worldCoordToChunkCoord(playerPos));
-
-	std::cout << "playerPosChunkCoord: " << glm::to_string(playerPosChunkCoord) << std::endl;
-
 	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((renderDistance + 1) * 16); x += 16)
 	{
 		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
-			if (true || isValidChunkPos(newChunkCoord))
+			if (isValidChunkPos(newChunkCoord))
 			{
 				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
 				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
@@ -300,7 +298,7 @@ void World::update(const glm::vec3& playerPos, const unsigned int renderDistance
 		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
-			if (true || isValidChunkPos(newChunkCoord))
+			if (isValidChunkPos(newChunkCoord))
 			{
 				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
 				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
@@ -320,7 +318,7 @@ void World::update(const glm::vec3& playerPos, const unsigned int renderDistance
 		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
-			if (true || isValidChunkPos(newChunkCoord))
+			if (isValidChunkPos(newChunkCoord))
 			{
 				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
 				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
@@ -340,7 +338,7 @@ void World::update(const glm::vec3& playerPos, const unsigned int renderDistance
 		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
-			if (true || isValidChunkPos(newChunkCoord))
+			if (isValidChunkPos(newChunkCoord))
 			{
 				glm::vec2 newChunkCoordCentered(newChunkCoord.x + chunkWidth / 2, newChunkCoord.y + chunkDepth / 2);
 				if (math::sqrdDistPtToRect(playerPosChunkCoord, newChunkCoordCentered, chunkWidth, chunkDepth) <= maxChunkDistance)
