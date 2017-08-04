@@ -21,7 +21,7 @@ public:
 
 	void use();
 	void setUniformMat4(const std::string& name, const glm::mat4& trans) { glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(trans)); }
-	void setUniformMat4(const glm::mat4& trans, const GLuint uniformLoc) { glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(trans)); }
+	void setUniformMat4(const GLuint uniformLoc, const glm::mat4& trans) { glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(trans)); }
 	const GLuint getUniformLocation(const std::string& name) const { return glGetUniformLocation(ID, name.c_str()); }
 
 private:

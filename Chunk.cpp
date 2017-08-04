@@ -437,7 +437,7 @@ void Chunk::draw(Shader& s)
 		modelLoc = s.getUniformLocation("model");
 	}
 
-	s.setUniformMat4(m, modelLoc);
+	s.setUniformMat4(modelLoc, m);
 
 	if (numVerts > 0)
 	{
