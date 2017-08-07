@@ -3,6 +3,8 @@
 
 #include <glm.hpp>
 
+#define NELEMS(x) sizeof(x) / sizeof(x[0])
+
 namespace math
 {
 float map(float x, float xmin, float xmax, float dmin, float dmax);
