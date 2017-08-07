@@ -135,11 +135,6 @@ Chunk::Chunk() :
 	glBindVertexArray(vao);
 
 	glGenBuffers(NUM_VBOS, VBOS);
-
-	static int chunksGen = 0;
-
-	std::cout << "constructing new chunk..." << chunksGen << std::endl;
-	chunksGen++;
 }
 
 Chunk::~Chunk()
@@ -345,15 +340,18 @@ void Chunk::moveBlockTo(glm::ivec3 blockPos, glm::ivec3 where)
 	blocksxyz[where.x][where.y ][where.z] = b;
 }
 
-void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff)
+void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff, int seed)
 {
 	const float inc = .03;
+
+	static std::mt19937 eng(seed);
 
 	// begin the perlin offset at the coordinate of the chunk right next to it
 	glm::vec3 perlinOffset(poff.x * inc, poff.y * inc, poff.z * inc);
 
 	float zResetVal = perlinOffset.z;
 
+	// first pass, generate terrain
 	for (int x = 0; x < chunkWidth; x++)
 	{
 		perlinOffset.z = zResetVal;
@@ -381,5 +379,38 @@ void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::v
 			perlinOffset.z += inc;
 		}
 		perlinOffset.x += inc;
+	}
+
+	// second pass, place "seeds" for trees, ores
+	const int minTreesPerChunk = 0;
+	const int maxTreesPerChunk = 5;
+	std::uniform_int_distribution<int> distrNumTrees(minTreesPerChunk, maxTreesPerChunk);
+	std::uniform_int_distribution<int> distrChunkX(0, chunkWidth - 1);
+	std::uniform_int_distribution<int> distrChunkY(0, chunkHeight - 1);
+	std::uniform_int_distribution<int> distrChunkZ(0, chunkDepth - 1);
+
+	const int treesPerChunk = distrNumTrees(eng);
+	int numTreesGend = 0;
+
+	const int treeTrunkHeight = 10;
+	const int treeLeavesHeight = 3;
+	const int treeLeavesWidth = 5;
+	const int treeLeavesDepth = 5;
+	const int treeHeight = treeTrunkHeight + treeLeavesHeight;
+
+	StructureGenerator treeGenerator("tree.structure");
+
+	for (int numTreesGend = 0; numTreesGend < treesPerChunk;)
+	{
+		int x = distrChunkX(eng);
+		int y = distrChunkY(eng);
+		int z = distrChunkZ(eng);
+		
+		if (treeGenerator.canPlaceAt(glm::vec3(x, y, z), this) && blocksxyz[x][y][z].type == Block::GRASS)// only place a tree on a top block (grass) that can fit a tree above it
+		{
+			treeGenerator.placeStructure(glm::vec3(x, y, z), this);
+
+			numTreesGend++;
+		}
 	}
 }

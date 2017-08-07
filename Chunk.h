@@ -19,6 +19,7 @@
 #include "Block.h"
 #include "Shader.h"
 #include "math.h"
+#include "StructureGenerator.h"
 
 const unsigned int chunkWidth = 16;
 const unsigned int chunkHeight = 256;
@@ -38,15 +39,15 @@ class Chunk
 {
 public:
 	friend class World;
+	friend class StructureGenerator;
 
 	Chunk();
 	~Chunk();
 
 	void buildModel();
-	//void buildModelThreaded(std::vector<glm::vec3> *modptr, std::vector<glm::vec2> *uvptr, std::vector<int> *btiptr);
 	void draw(Shader& s);
 
-	void generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff);
+	void generateChunk(const int minHeight, const int maxHeight, const glm::vec3& poff, int seed = 10);
 
 protected:
 	void moveChunkWorldSpace(const glm::vec2& newPos) { chunkPosxz = newPos; }
