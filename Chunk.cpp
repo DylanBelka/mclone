@@ -135,6 +135,10 @@ Chunk::Chunk() :
 	glBindVertexArray(vao);
 
 	glGenBuffers(NUM_VBOS, VBOS);
+
+	static int c = 0;
+	c++;
+	std::cout << "chunks created: " << c << std::endl;
 }
 
 Chunk::~Chunk()
@@ -390,7 +394,6 @@ void Chunk::generateChunk(const int minHeight, const int maxHeight, const glm::v
 	std::uniform_int_distribution<int> distrChunkZ(0, chunkDepth - 1);
 
 	const int treesPerChunk = distrNumTrees(eng);
-	int numTreesGend = 0;
 
 	const int treeTrunkHeight = 10;
 	const int treeLeavesHeight = 3;

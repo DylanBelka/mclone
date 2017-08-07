@@ -7,9 +7,6 @@
 
 #include <unordered_map>
 
-#include <thread>
-#include <mutex>
-
 #include <glm.hpp>
 #include <gtx/hash.hpp>
 
@@ -26,7 +23,7 @@ public:
 
 	void draw(Shader& s);
 
-	void generateWorld(Player& player, int numChunks, int seed = 0); // numChunks should always be a perfect square
+	void generateWorld(Player& player, int chunkRenderDistance, int seed = 0);
 
 	Block& getBlockAt(const glm::vec3& pos);
 	bool destroyBlockAt(const glm::vec3& startingPos, const glm::vec3& front, const float maxReach = 4.0); // returns true if the block could be destroyed
@@ -35,7 +32,7 @@ public:
 	void updateChunk(glm::vec2 chunkCoord) { hchunks[chunkCoord].buildModel(); }
 	void updateChunk(glm::vec3 worldPos);
 
-	void updateChunks(const glm::vec3& playerPos, const unsigned int renderDistance);
+	void updateChunks(const glm::vec3& playerPos, const unsigned int chunkRenderDistance);
 
 private:
 	glm::ivec2 worldCoordToChunkCoord(const glm::vec3& pos) { return glm::ivec2(pos.x / chunkWidth, pos.z / chunkDepth) * 16; }

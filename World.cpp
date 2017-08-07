@@ -27,7 +27,6 @@ Block& World::getBlockAt(const glm::vec3& pos)
 
 void World::updateChunk(glm::vec3 worldPos)
 {
-	Chunk* thisChunk;
 	glm::vec3 chunkPos = worldPos;
 
 	if (worldPos.x < 0)
@@ -83,7 +82,7 @@ bool World::placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, c
 
 #define DEBUG
 
-void World::generateWorld(Player& player, int numChunks, int seed)
+void World::generateWorld(Player& player, int chunkRenderDistance, int seed)
 {
 #ifdef DEBUG
 	using namespace std::chrono;
@@ -96,29 +95,21 @@ void World::generateWorld(Player& player, int numChunks, int seed)
 	beginFrame = steady_clock::now();
 #endif // DEBUG
 
-	int x, z;
-	x = z = 0;
-	float px, pz; // perlin offset coords, really just chunk coords
-	float py;
- 	int pxstart;
+	float px, py, pz; // player starting positions
 
 	//std::random_device r; // random_device for seeding the Mersenne Twister 19937 generator, slower than mt19937 but "more random"
 	std::mt19937 eng(seed);
-	std::uniform_int_distribution<int> distrInt(1, 10); // for seeding perlin noise
-	std::uniform_real_distribution<float> distrFloat(-1000.f, 1000.f); // for varying increments of perlin noise crawling
+	std::uniform_real_distribution<float> distrFloat(-1000.f, 1000.f); // player starting location
 
-	// randomize the starting position of the perlin noise
-	// essentially acting as a "seed" for the perlin noise generator
+	// randomize the starting position of the player/ perlin noise
 	px = distrFloat(eng);
 	pz = distrFloat(eng);
 	py = distrFloat(eng);
-	pxstart = px;
-	std::cout << "px: " << px << " pz: " << pz << std::endl;
 
 	player.moveTo(glm::vec3(px, 15.0, pz));
 	std::cout << "player starting at: " << glm::to_string(player.getPos()) << std::endl;
 
-	updateChunks(player.getPos(), numChunks * 4);
+	updateChunks(player.getPos(), chunkRenderDistance * 4); // 4x renderdistance to generate a larger area around player at first start
 
 #ifdef DEBUG
 	endFrame = steady_clock::now();
@@ -134,9 +125,9 @@ bool isValidChunkPos(glm::vec2 chunkPos)
 	return cPos.x % 16 == 0 && cPos.y % 16 == 0;
 }
 
-void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDistance)
+void World::updateChunks(const glm::vec3& playerPos, const unsigned int chunkRenderDistance)
 {
-	const float maxChunkDistance = (renderDistance * chunkWidth) * (renderDistance * chunkWidth);
+	const float maxChunkDistance = (chunkRenderDistance * chunkWidth) * (chunkRenderDistance * chunkWidth);
 
 	for (auto i = hchunks.begin(); i != hchunks.end(); i++)
 	{
@@ -167,9 +158,9 @@ void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDi
 	glm::vec2 playerPosChunkCoord(worldCoordToChunkCoord(playerPos)); // coordinates of chunk player is in
 
 	// positive, positive
-	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((renderDistance + 1) * 16); x += 16)
+	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((chunkRenderDistance + 1) * 16); x += 16)
 	{
-		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
+		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((chunkRenderDistance + 1) * 16); y += 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
 			if (isValidChunkPos(newChunkCoord))
@@ -187,9 +178,9 @@ void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDi
 	}
 
 	// positive, negative
-	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((renderDistance + 1) * 16); x += 16)
+	for (float x = playerPosChunkCoord.x; x < playerPosChunkCoord.x + ((chunkRenderDistance + 1) * 16); x += 16)
 	{
-		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
+		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((chunkRenderDistance + 1) * 16); y -= 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
 			if (isValidChunkPos(newChunkCoord))
@@ -207,9 +198,9 @@ void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDi
 	}
 
 	// negative, positive
-	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((renderDistance + 1) * 16); x -= 16)
+	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((chunkRenderDistance + 1) * 16); x -= 16)
 	{
-		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((renderDistance + 1) * 16); y += 16)
+		for (float y = playerPosChunkCoord.y; y < playerPosChunkCoord.y + ((chunkRenderDistance + 1) * 16); y += 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
 			if (isValidChunkPos(newChunkCoord))
@@ -227,9 +218,9 @@ void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDi
 	}
 
 	// negative, negative
-	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((renderDistance + 1) * 16); x -= 16)
+	for (float x = playerPosChunkCoord.x; x > playerPosChunkCoord.x - ((chunkRenderDistance + 1) * 16); x -= 16)
 	{
-		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((renderDistance + 1) * 16); y -= 16)
+		for (float y = playerPosChunkCoord.y; y > playerPosChunkCoord.y - ((chunkRenderDistance + 1) * 16); y -= 16)
 		{
 			glm::vec2 newChunkCoord(x, y);
 			if (isValidChunkPos(newChunkCoord))

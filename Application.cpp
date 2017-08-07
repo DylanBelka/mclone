@@ -74,25 +74,25 @@ void Application::handleEvents()
 			case SDLK_w:
 			{
 				player.move(direction::FORWARD);
-				world.updateChunks(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), chunkRenderDistance);
 				break;
 			}
 			case SDLK_s:
 			{
 				player.move(direction::BACKWARD);
-				world.updateChunks(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), chunkRenderDistance);
 				break;
 			}
 			case SDLK_a:
 			{
 				player.move(direction::LEFT);
-				world.updateChunks(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), chunkRenderDistance);
 				break;
 			}
 			case SDLK_d:
 			{
 				player.move(direction::RIGHT);
-				world.updateChunks(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), chunkRenderDistance);
 				break;
 			}
 			case SDLK_r:
@@ -186,12 +186,12 @@ void Application::run()
 	unsigned int projUniformLoc = blockShader.getUniformLocation("projection");
 
 	std::cout << "view distance: " << viewDistance << std::endl;
-	std::cout << "render distance: " << renderDistance << std::endl;
+	std::cout << "chunk render distance: " << chunkRenderDistance << std::endl;
 
-	const unsigned int numChunks = 4 * renderDistance * renderDistance;
+	const unsigned int numChunks = 4 * chunkRenderDistance * chunkRenderDistance;
 	std::cout << "number of chunks rendering: " << numChunks << std::endl;
 
-	world.generateWorld(player, renderDistance, time(NULL));
+	world.generateWorld(player, chunkRenderDistance, time(NULL));
 
 	while (running)
 	{
