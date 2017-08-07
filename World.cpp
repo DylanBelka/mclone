@@ -118,7 +118,7 @@ void World::generateWorld(Player& player, int numChunks, int seed)
 	player.moveTo(glm::vec3(px, 15.0, pz));
 	std::cout << "player starting at: " << glm::to_string(player.getPos()) << std::endl;
 
-	updateChunks(player.getPos(), numChunks);
+	updateChunks(player.getPos(), numChunks * 4);
 
 #ifdef DEBUG
 	endFrame = steady_clock::now();
