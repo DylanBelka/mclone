@@ -32,7 +32,7 @@ public:
 
 	void run();
 
-	const unsigned int renderDistance = 1; // number of chunks to render in any direction
+	const unsigned int renderDistance = 4; // number of chunks to render in any direction
 	const float viewDistance = (float)sqrt(renderDistance) * (float)chunkWidth;//32.0 * (float)chunkWidth;
 
 private:

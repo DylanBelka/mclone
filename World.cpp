@@ -81,6 +81,7 @@ bool World::placeBlockAt(const glm::vec3& startingPos, const glm::vec3& front, c
 	return false; // could not place block
 }
 
+#define DEBUG
 
 void World::generateWorld(Player& player, int numChunks, int seed)
 {
@@ -104,7 +105,7 @@ void World::generateWorld(Player& player, int numChunks, int seed)
 	//std::random_device r; // random_device for seeding the Mersenne Twister 19937 generator, slower than mt19937 but "more random"
 	std::mt19937 eng(seed);
 	std::uniform_int_distribution<int> distrInt(1, 10); // for seeding perlin noise
-	std::uniform_real_distribution<float> distrFloat(100, 1000); // for varying increments of perlin noise crawling
+	std::uniform_real_distribution<float> distrFloat(-1000.f, 1000.f); // for varying increments of perlin noise crawling
 
 	// randomize the starting position of the perlin noise
 	// essentially acting as a "seed" for the perlin noise generator
@@ -117,7 +118,7 @@ void World::generateWorld(Player& player, int numChunks, int seed)
 	player.moveTo(glm::vec3(px, 15.0, pz));
 	std::cout << "player starting at: " << glm::to_string(player.getPos()) << std::endl;
 
-	update(player.getPos(), numChunks);
+	updateChunks(player.getPos(), numChunks);
 
 #ifdef DEBUG
 	endFrame = steady_clock::now();
@@ -133,7 +134,7 @@ bool isValidChunkPos(glm::vec2 chunkPos)
 	return cPos.x % 16 == 0 && cPos.y % 16 == 0;
 }
 
-void World::update(const glm::vec3& playerPos, const unsigned int renderDistance)
+void World::updateChunks(const glm::vec3& playerPos, const unsigned int renderDistance)
 {
 	const float maxChunkDistance = (renderDistance * chunkWidth) * (renderDistance * chunkWidth);
 
@@ -249,7 +250,7 @@ void World::update(const glm::vec3& playerPos, const unsigned int renderDistance
 void World::createChunk(glm::vec2 chunkPos, glm::vec3 perlinCoords)
 {
 	Chunk tmp;
-	tmp.generateChunk(1, 15, perlinCoords);
+	tmp.generateChunk(1, 15, perlinCoords, time(NULL));
 	tmp.buildModel();
 	tmp.moveChunkWorldSpace(chunkPos);
 	hchunks[chunkPos] = tmp;

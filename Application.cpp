@@ -74,25 +74,25 @@ void Application::handleEvents()
 			case SDLK_w:
 			{
 				player.move(direction::FORWARD);
-				world.update(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_s:
 			{
 				player.move(direction::BACKWARD);
-				world.update(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_a:
 			{
 				player.move(direction::LEFT);
-				world.update(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_d:
 			{
 				player.move(direction::RIGHT);
-				world.update(player.getPos(), renderDistance);
+				world.updateChunks(player.getPos(), renderDistance);
 				break;
 			}
 			case SDLK_r:
@@ -191,11 +191,9 @@ void Application::run()
 	const unsigned int numChunks = 4 * renderDistance * renderDistance;
 	std::cout << "number of chunks rendering: " << numChunks << std::endl;
 
-	//world.generateWorld(player, numChunks, time(NULL));
+	world.generateWorld(player, renderDistance, time(NULL));
 
-	//player.moveTo(glm::vec3(sqrt(numChunks) * chunkWidth / 2.0, 20.0, sqrt(numChunks) * chunkDepth / 2.0));
-
-	while (running) 
+	while (running)
 	{
 		beginFrame = steady_clock::now();
 

@@ -35,7 +35,7 @@ public:
 	void updateChunk(glm::vec2 chunkCoord) { hchunks[chunkCoord].buildModel(); }
 	void updateChunk(glm::vec3 worldPos);
 
-	void update(const glm::vec3& playerPos, const unsigned int renderDistance);
+	void updateChunks(const glm::vec3& playerPos, const unsigned int renderDistance);
 
 private:
 	glm::ivec2 worldCoordToChunkCoord(const glm::vec3& pos) { return glm::ivec2(pos.x / chunkWidth, pos.z / chunkDepth) * 16; }

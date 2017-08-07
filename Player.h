@@ -4,6 +4,7 @@
 #include <glm.hpp>
 
 #include "Camera.h"
+#include "World.h"
 
 class Player
 {
