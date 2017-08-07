@@ -1,6 +1,8 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
+#include <algorithm>
+
 #include <glm.hpp>
 
 #include "Shader.h"
@@ -29,15 +31,19 @@ public:
 		or
 		returns 0 if the face is not unique
 	*/
-	int uniqueFaceIndexOffset(Face::FaceIndex face); 
+	int uniqueFaceIndexOffset(Face::FaceIndex face);
 
 	enum BlockType
 	{
 		AIR,
 		GRASS,
-		DIRT = 3,
-		STONE
+		DIRT = GRASS + 2,
+		STONE,
+		WOOD,
+		LEAVES = WOOD + 2,
 	};
+
+	static Block::BlockType strToBlockType(const std::string& str);
 
 	BlockType type;
 };
